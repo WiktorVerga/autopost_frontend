@@ -1,45 +1,47 @@
-# Autopost — frontend
+# Autopost · Frontend
 
-Web app for Autopost: store ideas, create programs that turn them into Instagram
-carousels, reels and stories, and follow what was generated and published.
+**Web dashboard for Autopost, a tool that turns a list of ideas into Instagram posts on a schedule.**
 
-**Stack:** Next.js 16.4 (App Router, Cache Components, Partial Prefetching) · React 19 ·
-TypeScript · Tailwind CSS v4 · shadcn/ui (new-york, Radix) · lucide-react · sonner.
+You store content ideas in collections, create *programs* that pick the next idea on a cron schedule, and Autopost generates the carousel and publishes it to a connected Instagram account. This repository is the Next.js frontend; the API lives in [autopost_backend](https://github.com/WiktorVerga/autopost_backend).
 
-## Getting started (Windows)
+![Next.js](https://img.shields.io/badge/Next.js_16-000?logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React_19-20232a?logo=react&logoColor=61dafb)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_v4-0f172a?logo=tailwindcss&logoColor=38bdf8)
+![Status](https://img.shields.io/badge/status-work_in_progress-orange)
 
-Requires Node.js ≥ 20.9.
+<p align="center">
+  <img src="docs/screenshots/overview.png" width="49%" alt="Overview: ideas stored, active programs, next run and recent activity" />
+  <img src="docs/screenshots/contents.png" width="49%" alt="Contents: generated carousels with their publication status" />
+  <img src="docs/screenshots/programs.png" width="49%" alt="Programs: schedules with mode, target account and next run" />
+  <img src="docs/screenshots/login.png" width="49%" alt="Sign-in page with Google" />
+</p>
 
-```bat
-cd "D:\Lavoro\AI Related\Autopost\autopost-frontend"
-npm install
-npm run dev
-```
+<sub>Screenshots taken with sample data (a coffee education page), with the backend mocked.</sub>
 
-Open http://localhost:3000.
+---
 
-- `.npmrc` points npm's cache to `D:\Lavoro\AI Related\Autopost\.npm-cache`, so nothing
-  is downloaded to drive C.
-- `.env.local` has `AUTH_BYPASS=true`, so you can browse the UI before the backend
-  login exists. Pages that need data show "The Autopost API is not reachable" until
-  the FastAPI backend is running on `API_URL`.
+## Features
 
-| Script          | What it does                     |
-| --------------- | -------------------------------- |
-| `npm run dev`   | Dev server with Turbopack        |
-| `npm run build` | Production build                 |
-| `npm run start` | Serve the production build       |
-| `npm run lint`  | ESLint                           |
+- **Sign in with Google.** OAuth is handled by the backend; the browser only ever sees a first-party session cookie.
+- **Overview.** Ideas stored, active programs, posts published in the last 7 days, next scheduled run and the latest activity.
+- **Idea collections.** Group ideas by theme, add, edit and delete them. Programs always pick the oldest idea they haven't published yet.
+- **Programs.** Visual schedule picker (hourly, daily, weekly, monthly) that is translated to a standard cron expression, timezone, target Instagram account and two modes: `preview` (generate only) or `publish` (generate and post).
+- **Contents.** Gallery of everything the programs generated, filterable by carousel, reel or story, with status (generated, published, failed).
+- **Logs.** Per-program timeline of info, warnings and errors.
+- **Instagram accounts.** Connect and disconnect accounts through the Instagram OAuth flow.
+- **Preferences.** Light, dark or system theme.
+- **Resilient UI.** Skeletons while data streams in, empty states, and a clear notice when the API is unreachable instead of a broken page.
 
-## Environment
+## Tech stack
 
-Copy `.env.example` to `.env.local` and adjust:
-
-| Variable              | Default                 | Notes                                          |
-| --------------------- | ----------------------- | ---------------------------------------------- |
-| `API_URL`             | `http://localhost:8000` | FastAPI base URL. Server-side only.            |
-| `SESSION_COOKIE_NAME` | `autopost_session`      | Cookie set by the backend after Google login.  |
-| `AUTH_BYPASS`         | `false`                 | `true` only in development, never in prod.     |
+| Area | Choice |
+|---|---|
+| Framework | Next.js 16 (App Router, Cache Components, Partial Prefetching, Turbopack) |
+| UI | React 19, TypeScript, Tailwind CSS v4, shadcn/ui (Radix), lucide-react |
+| Feedback | sonner (toasts), next-themes (theme switching) |
+| Fonts | Instrument Serif (self-hosted, OFL), Geist and Geist Mono |
+| Backend | [autopost_backend](https://github.com/WiktorVerga/autopost_backend) (FastAPI) |
 
 ## How it talks to the backend
 
@@ -48,71 +50,94 @@ Browser ──/api/*──▶ Next.js (rewrite) ──▶ FastAPI (API_URL)
 Server Components ──────────────────────▶ FastAPI, forwarding the user's cookies
 ```
 
-- **Same origin.** The browser only calls `/api/*`; `next.config.ts` rewrites it to the
-  backend. The session cookie stays first-party and there is no CORS to configure.
-- **Google OAuth lives in the backend.** "Continue with Google" is a plain link to
-  `/api/auth/google/login`. For the cookie to land on the frontend origin, register
-  the Google redirect URI **through the frontend**:
-  `http://localhost:3000/api/auth/google/callback` (and the production equivalent).
-  After the callback the backend sets the session cookie and redirects to `/`.
-- **Route protection.** `src/proxy.ts` (the new name of `middleware.ts` in Next 16)
-  redirects to `/login` when the session cookie is missing. It is an optimistic check:
-  the backend still validates the session on every request.
-- **Expected endpoints** are listed in `src/lib/api/endpoints.ts` and the response
-  shapes in `src/lib/api/types.ts`. Both are drafts: align them with the FastAPI
-  schemas (or generate the types from its OpenAPI spec).
+- **Same origin.** The browser only calls `/api/*`; `next.config.ts` rewrites it to the backend, so the session cookie stays first-party and no CORS setup is needed.
+- **Server reads, client writes.** Lists are fetched in Server Components; forms use a small browser client and then call `router.refresh()`.
+- **Route protection.** `src/proxy.ts` (the Next 16 name for `middleware.ts`) redirects to `/login` when the session cookie is missing. It is an optimistic check: the backend validates the session on every request.
+- **Single source of truth for routes.** Every backend path is declared once in `src/lib/api/endpoints.ts`; response shapes are in `src/lib/api/types.ts`.
 
-| Method | Path                    | Used by                       |
-| ------ | ----------------------- | ----------------------------- |
-| GET    | `/auth/google/login`    | Login button (redirect)       |
-| GET    | `/auth/me`              | Sidebar user menu             |
-| POST   | `/auth/logout`          | Sign out                      |
-| GET    | `/collections`          | Ideas, Programs               |
-| GET    | `/ideas` · POST `/ideas`| Ideas                         |
-| GET    | `/programs` · POST      | Programs                      |
-| GET    | `/contents`             | Contents, Overview            |
-| GET    | `/logs`                 | Logs, Overview                |
-| GET    | `/instagram/account`    | Instagram account             |
-| GET    | `/instagram/connect`    | "Connect Instagram" (redirect)|
+| Method | Backend path | Used by |
+|---|---|---|
+| GET | `/auth/google/login` | "Continue with Google" (redirect) |
+| GET · POST | `/auth/me` · `/auth/logout` | User menu, sign out |
+| GET · POST · PATCH · DELETE | `/idea-collections` | Idea collections |
+| GET · POST · PATCH · DELETE | `/ideas` | Ideas inside a collection |
+| GET · POST · PATCH · DELETE | `/programs` | Programs |
+| GET | `/contents` | Contents, Overview |
+| GET | `/logs` | Logs, Overview, program detail |
+| GET · DELETE | `/instagram-accounts` | Instagram accounts |
+| GET | `/instagram-accounts/oauth/login` | "Connect Instagram" (redirect) |
+
+## Getting started
+
+**Requirements:** Node.js 20.9 or newer, and the [backend](https://github.com/WiktorVerga/autopost_backend) running locally if you want real data.
+
+```bash
+git clone https://github.com/WiktorVerga/autopost_frontend.git
+cd autopost_frontend
+npm install
+cp .env.example .env.local     # on Windows: copy .env.example .env.local
+npx next dev
+```
+
+Open <http://localhost:3000>.
+
+> Tip: set `AUTH_BYPASS=true` in `.env.local` to browse the UI without signing in. Pages that need data show "The Autopost API is not reachable" until the backend is running on `API_URL`.
+
+### Environment variables
+
+| Variable | Default | Notes |
+|---|---|---|
+| `API_URL` | `http://localhost:8000` | FastAPI base URL. Server-side only. |
+| `SESSION_COOKIE_NAME` | `autopost_session` | Name of the cookie set by the backend after login. Must match the backend's `AUTH_COOKIE_NAME`. |
+| `AUTH_BYPASS` | `false` | `true` only in development, never in production. |
+
+For Google sign-in to land the cookie on the frontend origin, register the Google redirect URI **through the frontend**: `http://localhost:3000/api/auth/google/callback` (and the production equivalent).
+
+### Scripts
+
+| Command | What it does |
+|---|---|
+| `npx next dev` | Development server with Turbopack |
+| `npm run build` | Production build |
+| `npm run start` | Serve the production build |
+| `npm run lint` | ESLint |
 
 ## Project structure
 
 ```
 src/
 ├─ app/
-│  ├─ (auth)/login/          Sign-in page (public)
-│  ├─ (app)/                 Authenticated area with the sidebar
-│  │  ├─ page.tsx            01 Overview
-│  │  ├─ ideas/              02 Ideas (+ new idea dialog)
-│  │  ├─ programs/           03 Programs (+ new program dialog)
-│  │  ├─ contents/           04 Generated contents
-│  │  ├─ logs/               05 Logs
-│  │  └─ account/            06 Instagram account
-│  ├─ fonts/                 Self-hosted Instrument Serif
-│  ├─ globals.css            Theme tokens (Tailwind v4 + shadcn)
-│  └─ layout.tsx             Root layout, fonts, toaster
-├─ components/
-│  ├─ ui/                    shadcn/ui components
-│  ├─ app-sidebar.tsx, nav.ts, page-header.tsx, user-menu*.tsx, …
+│  ├─ (auth)/login/        Sign-in page (public)
+│  ├─ (app)/               Authenticated area with the sidebar
+│  │  ├─ page.tsx          Overview
+│  │  ├─ idea-collections/ Collections and their ideas
+│  │  ├─ programs/         Programs, schedule picker, program detail
+│  │  ├─ contents/         Generated contents
+│  │  ├─ logs/             Activity log
+│  │  ├─ account/          Instagram accounts
+│  │  └─ settings/         Preferences (theme)
+│  ├─ fonts/               Self-hosted Instrument Serif
+│  └─ globals.css          Theme tokens (Tailwind v4 + shadcn)
+├─ components/             shadcn/ui components, sidebar, page header, empty states
+├─ hooks/
 ├─ lib/
-│  ├─ api/                   endpoints, types, browser client, server client
-│  ├─ auth.ts                getCurrentUser(), AUTH_BYPASS
-│  └─ format.ts              Date and label helpers
-└─ proxy.ts                  Auth redirect
+│  ├─ api/                 Endpoints, types, browser and server clients, errors
+│  ├─ auth.ts              getCurrentUser(), AUTH_BYPASS
+│  ├─ cron.ts · schedule.ts  Schedule ⇄ cron translation
+│  └─ format.ts            Date and label helpers
+└─ proxy.ts                Auth redirect
 ```
 
-## Conventions
+## Design
 
-- **Cache Components is on.** Anything that reads cookies (every backend call from the
-  server) must render inside `<Suspense>`; the static shell (sidebar, headers) loads
-  instantly and data streams in. See `node_modules/next/dist/docs/` before using
-  unfamiliar APIs: Next 16 differs from older versions.
-- **Server reads, client writes.** Lists are fetched in Server Components with
-  `serverApi`; forms call the browser `api` client, then `router.refresh()`.
-- **Design.** "Paper & ink": warm off-white, near-black ink, one vermilion `signal`
-  colour. Instrument Serif for titles, Geist for UI, Geist Mono for metadata. Surfaces
-  stay flat (hairline rules, no shadows); images sit directly on the page, never in
-  raised cards.
-- **Adding shadcn components:** `npx shadcn@latest add <component>` (configured in
-  `components.json`). If you also add `sidebar`, keep the two lint fixes already
-  applied to `sidebar.tsx` and `hooks/use-mobile.ts`.
+"Paper and ink": warm off-white background, near-black ink and a single vermilion accent. Instrument Serif for titles, Geist for the interface, Geist Mono for metadata. Surfaces stay flat, with hairline rules and no shadows, and images sit directly on the page instead of inside raised cards.
+
+## Roadmap
+
+- Align the remaining endpoints (`/contents`, `/logs`) with the backend as its pipeline lands.
+- Generate `types.ts` from the backend OpenAPI schema instead of maintaining it by hand.
+- Reels and stories alongside carousels.
+
+## Author
+
+**Wiktor Verga** · [GitHub](https://github.com/WiktorVerga) · [LinkedIn](https://linkedin.com/in/wiktor-verga)
