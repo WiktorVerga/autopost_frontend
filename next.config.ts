@@ -10,6 +10,9 @@ const API_URL = process.env.API_URL ?? "http://localhost:8000";
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  experimental: {
+    agentUpgrade: "security",
+  },
   turbopack: {
     rules: {
       "*.css": {
