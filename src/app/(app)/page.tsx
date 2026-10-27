@@ -46,22 +46,26 @@ export default function OverviewPage() {
 }
 
 async function Stats() {
-  const [ideas, programs] = await Promise.all([
+  const [ideas, programs, posts] = await Promise.all([
     settle(serverApi.ideas()),
     settle(serverApi.programs()),
+    settle(serverApi.posts()),
   ]);
 
+  const usedIdeasIds = new Set(posts.data?.map((p) => p.idea_id));
+  const ideasLeftToGenerate = ideas.data?.filter((i) => !usedIdeasIds.has(i.id));
   const activePrograms = programs.data?.filter((p) => p.is_active && p.idea_collection_id !== null);
   const nextRun = activePrograms
     ?.map((p) => p.next_run)
     .filter((d): d is string => Boolean(d))
     .sort()[0];
-  //const publishedThisWeek = contents.data?.filter((c) => isWithinDays(c.published_at, 7));
+  const publishedThisWeek = posts.data?.filter((c) => isWithinDays(c.published_at, 7));
 
   const stats = [
-    { label: "Ideas stored", value: ideas.data?.length },
+    { label: "Ideas left to generate", value: ideasLeftToGenerate?.length },
     { label: "Active programs", value: activePrograms?.length },
     { label: "Next run", value: nextRun ? formatDateTime(nextRun) : undefined, small: true },
+    { label: "Published this Week", value: publishedThisWeek ? publishedThisWeek.length : undefined, small: true },
   ];
 
   const error = ideas.error ?? programs.error;

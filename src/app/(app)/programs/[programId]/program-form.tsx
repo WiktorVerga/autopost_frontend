@@ -119,6 +119,48 @@ export function ProgramForm({
 
   return (
     <form action={onSubmit} className="grid max-w-2xl gap-6">
+      <div
+        className={`grid gap-3 rounded-lg border p-5 transition-colors ${
+          form.active ? "border-signal/50 bg-signal/10" : "bg-muted/40"
+        }`}
+      >
+        <div className="flex items-center justify-between gap-4">
+          <Label htmlFor="active" className="grid cursor-pointer gap-1">
+            <span className="flex items-center gap-2 text-base font-semibold">
+              <span
+                className={`size-2 rounded-full ${form.active ? "bg-signal" : "bg-muted-foreground/40"}`}
+              />
+              {form.active ? "Active" : "Inactive"}
+            </span>
+            <span className="text-sm leading-snug font-normal text-muted-foreground">
+              {form.active
+                ? "The program runs automatically on its schedule."
+                : "The program is paused and never runs."}
+            </span>
+          </Label>
+          <Switch
+            id="active"
+            size="lg"
+            checked={form.active}
+            onCheckedChange={(active) => set({ active })}
+            className="data-[state=checked]:bg-signal"
+          />
+        </div>
+        {activating ? (
+          <p role="alert" className="rounded-md border border-chart-4/40 bg-chart-4/10 px-3 py-2 text-sm">
+            Once saved, this program will run automatically at every time set by its schedule
+            {form.mode === "publish" ? " and post the content to Instagram" : ""}, from its next
+            scheduled run onward.
+            {form.collection === NO_COLLECTION
+              ? " Pick a collection first: without one it stays inactive."
+              : ""}
+          </p>
+        ) : null}
+        {form.active !== saved.active ? (
+          <p className="text-xs text-muted-foreground">Save changes to apply.</p>
+        ) : null}
+      </div>
+
       <div className="grid gap-2">
         <Label htmlFor="name">Name</Label>
         <Input
@@ -180,34 +222,6 @@ export function ProgramForm({
             The current schedule{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono">{program.cron_expression}</code>{" "}
             can&apos;t be shown in the picker: it is kept until you change it here.
-          </p>
-        ) : null}
-      </div>
-
-      <div className="grid gap-3 border-t pt-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <Label htmlFor="active">Active</Label>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {form.active
-                ? "The program runs automatically on its schedule."
-                : "The program is paused and never runs."}
-            </p>
-          </div>
-          <Switch
-            id="active"
-            checked={form.active}
-            onCheckedChange={(active) => set({ active })}
-          />
-        </div>
-        {activating ? (
-          <p role="alert" className="rounded-md border border-chart-4/40 bg-chart-4/10 px-3 py-2 text-sm">
-            Once saved, this program will run automatically at every time set by its schedule
-            {form.mode === "publish" ? " and post the content to Instagram" : ""}, from its next
-            scheduled run onward.
-            {form.collection === NO_COLLECTION
-              ? " Pick a collection first: without one it stays inactive."
-              : ""}
           </p>
         ) : null}
       </div>
