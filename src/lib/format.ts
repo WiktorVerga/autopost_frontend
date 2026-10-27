@@ -1,4 +1,4 @@
-import type { ContentType, ProgramMode } from "./api/types";
+import type { ContentStatus, ContentType, ProgramMode } from "./api/types";
 
 const dateTime = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -28,10 +28,11 @@ export const contentTypeLabel: Record<ContentType, string> = {
   story: "Story",
 };
 
-export const contentTypePlural: Record<ContentType, string> = {
-  carousel: "Carousels",
-  reel: "Reels",
-  story: "Stories",
+export const contentStatusLabel: Record<ContentStatus, string> = {
+  generated: "Generated",
+  publishing: "Publishing",
+  published: "Published",
+  failed: "Failed",
 };
 
 export const modeLabel: Record<ProgramMode, string> = {

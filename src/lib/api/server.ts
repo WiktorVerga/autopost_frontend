@@ -11,14 +11,15 @@ import { cookies } from "next/headers";
 
 import { endpoints } from "./endpoints";
 import { ApiError, toApiError } from "./errors";
-import type {
+import {
+  Post,
   Content,
   Idea,
   IdeaCollection,
   InstagramAccount,
   LogEntry,
   Program,
-  User,
+  User, ContentPost,
 } from "./types";
 
 const API_URL = process.env.API_URL ?? "https://localhost:8000";
@@ -54,12 +55,14 @@ export const serverApi = {
     serverFetch<IdeaCollection>(`${endpoints.collections}/${id}`),
   ),
   ideas: cache(() => serverFetch<Idea[]>(endpoints.ideas)),
+  idea: cache((id: number) => serverFetch<Idea>(`${endpoints.ideas}/${id}`)),
   collectionIdeas: cache((collectionId: number) =>
     serverFetch<Idea[]>(`${endpoints.ideas}?idea_collection_id=${collectionId}`),
   ),
   programs: cache(() => serverFetch<Program[]>(endpoints.programs)),
   program: cache((id: number) => serverFetch<Program>(`${endpoints.programs}/${id}`)),
-  contents: cache(() => serverFetch<Content[]>(endpoints.contents)),
+  posts: cache(() => serverFetch<Post[]>(endpoints.posts)),
+  post: cache((id: number) => serverFetch<Post>(`${endpoints.posts}/${id}`)),
   logs: cache(() => serverFetch<LogEntry[]>(endpoints.logs)),
   programLogs: cache((programId: number, limit = 20) =>
     serverFetch<LogEntry[]>(`${endpoints.logs}?program_id=${programId}&limit=${limit}`),

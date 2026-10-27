@@ -46,10 +46,9 @@ export default function OverviewPage() {
 }
 
 async function Stats() {
-  const [ideas, programs, contents] = await Promise.all([
+  const [ideas, programs] = await Promise.all([
     settle(serverApi.ideas()),
     settle(serverApi.programs()),
-    settle(serverApi.contents()),
   ]);
 
   const activePrograms = programs.data?.filter((p) => p.is_active && p.idea_collection_id !== null);
@@ -57,16 +56,15 @@ async function Stats() {
     ?.map((p) => p.next_run)
     .filter((d): d is string => Boolean(d))
     .sort()[0];
-  const publishedThisWeek = contents.data?.filter((c) => isWithinDays(c.published_at, 7));
+  //const publishedThisWeek = contents.data?.filter((c) => isWithinDays(c.published_at, 7));
 
   const stats = [
     { label: "Ideas stored", value: ideas.data?.length },
     { label: "Active programs", value: activePrograms?.length },
-    { label: "Published · last 7 days", value: publishedThisWeek?.length },
     { label: "Next run", value: nextRun ? formatDateTime(nextRun) : undefined, small: true },
   ];
 
-  const error = ideas.error ?? programs.error ?? contents.error;
+  const error = ideas.error ?? programs.error;
 
   return (
     <div className="space-y-4">

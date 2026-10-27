@@ -35,6 +35,7 @@ type FormState = {
   collection: string;
   account: string;
   mode: ProgramMode;
+  active: boolean;
 };
 
 function initialState(program: Program): FormState {
@@ -43,6 +44,7 @@ function initialState(program: Program): FormState {
     collection: program.idea_collection_id === null ? NO_COLLECTION : String(program.idea_collection_id),
     account: String(program.instagram_account_id),
     mode: program.mode,
+    active: program.is_active,
   };
 }
 
@@ -78,8 +80,10 @@ export function ProgramForm({
   }
   if (form.account !== saved.account) changes.instagram_account_id = Number(form.account);
   if (form.mode !== saved.mode) changes.mode = form.mode;
+  if (form.active !== saved.active) changes.is_active = form.active;
   if (savedCron === null ? scheduleEdited : cron !== savedCron) changes.cron_expression = cron;
   const dirty = Object.keys(changes).length > 0;
+  const activating = form.active && !saved.active;
 
   function reset() {
     setForm(saved);
@@ -97,7 +101,9 @@ export function ProgramForm({
     startTransition(async () => {
       try {
         await api.updateProgram(program.id, changes);
-        toast.success("Program updated");
+        toast.success(
+          changes.is_active ? "Program activated: it now runs on its schedule" : "Program updated",
+        );
         setScheduleEdited(false);
         router.refresh();
       } catch (e) {
@@ -174,6 +180,34 @@ export function ProgramForm({
             The current schedule{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono">{program.cron_expression}</code>{" "}
             can&apos;t be shown in the picker: it is kept until you change it here.
+          </p>
+        ) : null}
+      </div>
+
+      <div className="grid gap-3 border-t pt-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <Label htmlFor="active">Active</Label>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {form.active
+                ? "The program runs automatically on its schedule."
+                : "The program is paused and never runs."}
+            </p>
+          </div>
+          <Switch
+            id="active"
+            checked={form.active}
+            onCheckedChange={(active) => set({ active })}
+          />
+        </div>
+        {activating ? (
+          <p role="alert" className="rounded-md border border-chart-4/40 bg-chart-4/10 px-3 py-2 text-sm">
+            Once saved, this program will run automatically at every time set by its schedule
+            {form.mode === "publish" ? " and post the content to Instagram" : ""}, from its next
+            scheduled run onward.
+            {form.collection === NO_COLLECTION
+              ? " Pick a collection first: without one it stays inactive."
+              : ""}
           </p>
         ) : null}
       </div>

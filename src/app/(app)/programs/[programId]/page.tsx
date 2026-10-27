@@ -95,7 +95,10 @@ async function ProgramDetail({ programId }: { programId: string }) {
 
       <section className="space-y-6">
         <SectionTitle>Settings</SectionTitle>
+        {/* Cache Components keeps client state across navigations: remount the form
+            whenever the saved program changes so its fields always show the real state. */}
         <ProgramForm
+          key={JSON.stringify(p)}
           program={p}
           collections={collections.data ?? []}
           instagramAccounts={accounts.data ?? []}

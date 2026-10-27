@@ -53,19 +53,29 @@ export type Program = {
   next_run: ISODateString | null;
 };
 
-export type ContentStatus = "generated" | "published" | "failed";
+export type ContentStatus = "generated" | "publishing" | "published" | "failed";
 
-export type Content = {
+export type Post = {
   id: Id;
   program_id: Id;
   idea_id: Id;
-  content_type: ContentType;
   caption: string;
-  hashtags: string[];
-  media_urls: string[];
+  slides: Content[];
   status: ContentStatus;
-  published_at: ISODateString | null;
   created_at: ISODateString;
+  published_at: ISODateString | null;
+};
+
+export type ContentPost = {
+  id: Id;
+  status: ContentStatus;
+  slides: Content[];
+};
+
+export type Content = {
+  id: Id;
+  position: number;
+  public_url: string;
 };
 
 export type LogLevel = "info" | "warning" | "error";

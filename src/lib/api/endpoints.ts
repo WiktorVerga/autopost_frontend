@@ -18,6 +18,7 @@ export const endpoints = {
     connect: "/instagram-accounts/oauth/login",
     disconnect: "/instagram-accounts",
   },
+  posts: "/posts",
 } as const;
 
 /** Prefix the browser uses; `next.config.ts` rewrites it to the backend. */

@@ -28,7 +28,7 @@ export default function ContentsPage() {
 }
 
 async function ContentsSection() {
-  const { data, error } = await settle(serverApi.contents());
+  const { data, error } = await settle(serverApi.posts());
   if (error) return <ApiNotice error={error} />;
 
   if (data.length === 0) {

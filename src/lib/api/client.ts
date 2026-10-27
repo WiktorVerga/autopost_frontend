@@ -13,6 +13,7 @@ import type {
   Idea,
   IdeaCollection,
   InstagramOAuthLogin,
+  Post,
   Program,
   UpdateCollectionInput,
   UpdateIdeaInput,
@@ -40,24 +41,30 @@ export async function apiFetch<T>(path: string, options: Options = {}): Promise<
 }
 
 export const api = {
-  logout: () => apiFetch<void>(endpoints.auth.logout, { method: "POST" }),
+  logout: () => apiFetch<void>(endpoints.auth.logout, {method: "POST"}),
   createCollection: (input: CreateCollectionInput) =>
-    apiFetch<IdeaCollection>(endpoints.collections, { method: "POST", body: input }),
+      apiFetch<IdeaCollection>(endpoints.collections, {method: "POST", body: input}),
   updateCollection: (id: Id, input: UpdateCollectionInput) =>
-    apiFetch<IdeaCollection>(`${endpoints.collections}/${id}`, { method: "PATCH", body: input }),
+      apiFetch<IdeaCollection>(`${endpoints.collections}/${id}`, {method: "PATCH", body: input}),
   deleteCollection: (id: Id) =>
-    apiFetch<void>(`${endpoints.collections}/${id}`, { method: "DELETE" }),
+      apiFetch<void>(`${endpoints.collections}/${id}`, {method: "DELETE"}),
   createIdea: (input: CreateIdeaInput) =>
-    apiFetch<Idea>(endpoints.ideas, { method: "POST", body: input }),
+      apiFetch<Idea>(endpoints.ideas, {method: "POST", body: input}),
   updateIdea: (id: Id, input: UpdateIdeaInput) =>
-    apiFetch<Idea>(`${endpoints.ideas}/${id}`, { method: "PATCH", body: input }),
-  deleteIdea: (id: Id) => apiFetch<void>(`${endpoints.ideas}/${id}`, { method: "DELETE" }),
+      apiFetch<Idea>(`${endpoints.ideas}/${id}`, {method: "PATCH", body: input}),
+  deleteIdea: (id: Id) =>
+      apiFetch<void>(`${endpoints.ideas}/${id}`, {method: "DELETE"}),
   createProgram: (input: CreateProgramInput) =>
-    apiFetch<Program>(endpoints.programs, { method: "POST", body: input }),
+      apiFetch<Program>(endpoints.programs, {method: "POST", body: input}),
   updateProgram: (id: Id, input: UpdateProgramInput) =>
-    apiFetch<Program>(`${endpoints.programs}/${id}`, { method: "PATCH", body: input }),
-  deleteProgram: (id: Id) => apiFetch<void>(`${endpoints.programs}/${id}`, { method: "DELETE" }),
-  instagramLogin: () => apiFetch<InstagramOAuthLogin>(endpoints.instagram.connect),
+      apiFetch<Program>(`${endpoints.programs}/${id}`, {method: "PATCH", body: input}),
+  deleteProgram: (id: Id) =>
+      apiFetch<void>(`${endpoints.programs}/${id}`, {method: "DELETE"}),
+  getPost: (id: Id) => apiFetch<Post>(`${endpoints.posts}/${id}`),
+  publishPost: (id: Id) =>
+      apiFetch<Post>(`${endpoints.posts}/${id}/publish`, {method: "POST"}),
+  instagramLogin: () =>
+      apiFetch<InstagramOAuthLogin>(endpoints.instagram.connect),
   disconnectInstagramAccount: (id: Id) =>
-    apiFetch<void>(`${endpoints.instagram.disconnect}/${id}`, { method: "DELETE" }),
+      apiFetch<void>(`${endpoints.instagram.disconnect}/${id}`, {method: "DELETE"}),
 };
