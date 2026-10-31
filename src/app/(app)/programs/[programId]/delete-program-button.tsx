@@ -38,7 +38,7 @@ export function DeleteProgramButton({ program }: { program: Program }) {
   }
 
   return (
-    <Button variant="outline" disabled={pending} onClick={askConfirmation}>
+    <Button variant="destructive" disabled={pending} onClick={askConfirmation}>
       {pending ? <Loader2Icon className="animate-spin" /> : <Trash2Icon />}
       Delete
     </Button>

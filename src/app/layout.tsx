@@ -34,6 +34,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${GeistSans.variable} ${GeistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
     >
       <body className="min-h-full font-sans">
+        {/* Gitignored file, so it is linked rather than imported: an import would break the build on the server. */}
+        {process.env.NODE_ENV === "development" && (
+          <link rel="stylesheet" href="/dev-border.css" precedence="default" />
+        )}
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
           <Toaster position="bottom-right" />

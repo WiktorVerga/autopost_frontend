@@ -107,11 +107,11 @@ async function RecentActivity() {
   return (
     <ol className="divide-y">
       {recent.map((log) => (
-        <li key={log.id} className="flex items-baseline gap-4 py-3 text-sm">
+        <li key={log.id} className="flex flex-col gap-1 py-3 text-sm sm:flex-row sm:items-baseline sm:gap-4">
           <span className="w-44 shrink-0 whitespace-nowrap font-mono text-xs text-muted-foreground">
             {formatDateTime(log.created_at)}
           </span>
-          <span className={log.level === "error" ? "text-destructive" : ""}>{log.message}</span>
+          <span className={`min-w-0 wrap-anywhere ${log.level === "error" ? "text-destructive" : ""}`}>{log.message}</span>
         </li>
       ))}
     </ol>

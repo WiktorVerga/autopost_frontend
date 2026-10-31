@@ -32,5 +32,5 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // Skip the API rewrite, Next internals and static files.
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|webp|ico|woff2?)$).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:css|svg|png|jpg|jpeg|webp|ico|woff2?)$).*)"],
 };

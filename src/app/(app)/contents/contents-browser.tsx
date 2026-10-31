@@ -44,10 +44,10 @@ export function ContentsBrowser({ contents }: { contents: Post[] }) {
           {visible.map((p) => (
             <li key={p.id} className="group">
               <Link href={`/contents/${p.id}`} className="block">
-                <div className="aspect-[4/5] overflow-hidden bg-muted">
-                  {p.slides[0].public_url ? (
+                <div className="aspect-4/5 overflow-hidden bg-muted">
+                  {p.slides[0].url ? (
                     // eslint-disable-next-line @next/next/no-img-element -- storage URLs are external and not known in advance
-                    <img src={p.slides[0].public_url} alt="" className="size-full object-cover" />
+                    <img src={p.slides[0].url} alt="" className="size-full object-cover" />
                   ) : null}
                 </div>
                 <div className="mt-3 flex items-baseline justify-between gap-2 border-b pb-2 font-mono text-[10px] uppercase tracking-[0.14em]">

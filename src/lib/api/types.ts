@@ -75,7 +75,8 @@ export type ContentPost = {
 export type Content = {
   id: Id;
   position: number;
-  public_url: string;
+  storage_key: string;
+  url: string;
 };
 
 export type LogLevel = "info" | "warning" | "error";
