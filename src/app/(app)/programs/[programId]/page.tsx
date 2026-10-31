@@ -147,7 +147,7 @@ async function RecentLogs({ programId }: { programId: number }) {
           {logs.data.map((log) => (
             <li
               key={log.id}
-              className="grid grid-cols-[auto_4.5rem_1fr] items-baseline gap-4 py-3 text-sm"
+              className="grid grid-cols-[auto_1fr] items-baseline gap-x-4 gap-y-1 py-3 text-sm sm:grid-cols-[auto_4.5rem_1fr] sm:gap-y-4"
             >
               <span className="font-mono text-xs text-muted-foreground">
                 {formatDateTime(log.created_at)}
@@ -155,7 +155,7 @@ async function RecentLogs({ programId }: { programId: number }) {
               <span className={`font-mono text-xs uppercase ${levelStyle[log.level] ?? ""}`}>
                 {log.level}
               </span>
-              <span>{log.message}</span>
+              <span className="col-span-full min-w-0 wrap-anywhere sm:col-span-1">{log.message}</span>
             </li>
           ))}
         </ul>

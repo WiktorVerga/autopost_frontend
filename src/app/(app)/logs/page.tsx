@@ -57,8 +57,9 @@ async function LogsTable() {
   }
 
   return (
-    <Table>
-      <TableHeader>
+    // Below lg each row stacks: the details on one line, the message full width underneath.
+    <Table className="block lg:table">
+      <TableHeader className="hidden lg:table-header-group">
         <TableRow className="font-mono text-[10px] uppercase tracking-[0.14em]">
           <TableHead className="w-48">Time</TableHead>
           <TableHead className="w-24">Level</TableHead>
@@ -66,15 +67,15 @@ async function LogsTable() {
           <TableHead>Message</TableHead>
         </TableRow>
       </TableHeader>
-      <TableBody>
+      <TableBody className="block lg:table-row-group">
         {data.map((log) => (
-          <TableRow key={log.id}>
-            <TableCell className="font-mono text-xs">{formatDateTime(log.created_at)}</TableCell>
-            <TableCell className={`font-mono text-xs uppercase ${levelStyle[log.level]}`}>{log.level}</TableCell>
-            <TableCell className="font-mono text-xs text-muted-foreground">
+          <TableRow key={log.id} className="flex flex-wrap items-baseline py-2 lg:table-row lg:py-0">
+            <TableCell className="py-0.5 pl-0 font-mono text-xs lg:p-2">{formatDateTime(log.created_at)}</TableCell>
+            <TableCell className={`py-0.5 font-mono text-xs uppercase lg:p-2 ${levelStyle[log.level]}`}>{log.level}</TableCell>
+            <TableCell className="py-0.5 font-mono text-xs text-muted-foreground lg:p-2">
               {log.program_id !== null ? `#${log.program_id}` : "—"}
             </TableCell>
-            <TableCell className="whitespace-normal">{log.message}</TableCell>
+            <TableCell className="w-full py-0.5 pl-0 whitespace-normal wrap-anywhere lg:w-auto lg:p-2">{log.message}</TableCell>
           </TableRow>
         ))}
       </TableBody>

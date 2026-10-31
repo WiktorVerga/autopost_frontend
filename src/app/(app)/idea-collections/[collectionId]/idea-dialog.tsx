@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition, type ReactNode } from "react";
@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
 import type { Idea } from "@/lib/api/types";
+import { CategoryCombobox } from "./category-combobox";
 
 type IdeaDialogProps = {
   collectionId: number;
@@ -104,7 +105,7 @@ export function IdeaDialog({ collectionId, idea, children, open, onOpenChange }:
             <Label htmlFor="category">
               Category <span className="font-normal text-muted-foreground">(optional)</span>
             </Label>
-            <Input
+            <CategoryCombobox
               id="category"
               name="category"
               maxLength={100}

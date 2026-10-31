@@ -226,20 +226,38 @@ export function ProgramForm({
         ) : null}
       </div>
 
-      <div className="flex items-start justify-between gap-4 border-t pt-5">
-        <div>
-          <Label htmlFor="publish">Publish to Instagram</Label>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {form.mode === "publish"
-              ? "Content is generated and posted automatically."
-              : "Preview mode: content is generated and saved, nothing is posted."}
-          </p>
+      <div
+        className={`grid gap-3 rounded-lg border p-5 transition-colors ${
+          form.mode === "publish" ? "border-signal/50 bg-signal/10" : "bg-muted/40"
+        }`}
+      >
+        <div className="flex items-center justify-between gap-4">
+          <Label htmlFor="publish" className="grid cursor-pointer gap-1">
+            <span className="flex items-center gap-2 text-base font-semibold">
+              <span
+                className={`size-2 rounded-full ${
+                  form.mode === "publish" ? "bg-signal" : "bg-muted-foreground/40"
+                }`}
+              />
+              {form.mode === "publish" ? "Publish to Instagram" : "Preview only"}
+            </span>
+            <span className="text-sm leading-snug font-normal text-muted-foreground">
+              {form.mode === "publish"
+                ? "Content is generated and posted automatically."
+                : "Content is generated and saved, nothing is posted."}
+            </span>
+          </Label>
+          <Switch
+            id="publish"
+            size="lg"
+            checked={form.mode === "publish"}
+            onCheckedChange={(on) => set({ mode: on ? "publish" : "preview" })}
+            className="data-[state=checked]:bg-signal"
+          />
         </div>
-        <Switch
-          id="publish"
-          checked={form.mode === "publish"}
-          onCheckedChange={(on) => set({ mode: on ? "publish" : "preview" })}
-        />
+        {form.mode !== saved.mode ? (
+          <p className="text-xs text-muted-foreground">Save changes to apply.</p>
+        ) : null}
       </div>
 
       <div className="flex justify-end gap-2 border-t pt-5">

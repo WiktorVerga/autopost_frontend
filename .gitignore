@@ -24,6 +24,7 @@
 # misc
 .DS_Store
 *.pem
+/public/dev-border.css
 
 # debug
 npm-debug.log*

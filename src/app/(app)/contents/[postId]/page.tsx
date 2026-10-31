@@ -100,9 +100,9 @@ async function PostDetails({postId}: { postId: string }) {
                     {slides.map((s, i) => (
                         <li key={s.id}>
                             <div className="aspect-[4/5] overflow-hidden bg-muted">
-                                {s.public_url ? (
+                                {s.url ? (
                                     // eslint-disable-next-line @next/next/no-img-element -- storage URLs are external and not known in advance
-                                    <img src={s.public_url} alt="" className="size-full object-cover"/>
+                                    <img src={s.url} alt="" className="size-full object-cover"/>
                                 ) : null}
                             </div>
                             <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">

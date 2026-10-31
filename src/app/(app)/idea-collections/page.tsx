@@ -66,7 +66,7 @@ async function CollectionsList() {
                 href={`/idea-collections/${collection.id}`}
                 className="group grid gap-1 py-4 md:grid-cols-[1fr_auto] md:items-center md:gap-8"
               >
-                <p className="text-[15px] font-medium group-hover:underline group-hover:underline-offset-4">
+                <p className="text-[15px] font-medium group-hover:underline group-hover:underline-offset-4 capitalize">
                   {collection.name}
                 </p>
                 <span className="flex items-center gap-3 font-mono text-xs text-muted-foreground">
