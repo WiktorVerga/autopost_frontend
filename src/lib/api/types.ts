@@ -79,6 +79,50 @@ export type Content = {
   url: string;
 };
 
+export type TemplateFormat = "carousel" | "reel";
+
+export type TemplateVariable = {
+  name: string;
+  type: string;
+  example: unknown;
+};
+
+export type Template = {
+  id: Id;
+  name: string;
+  description: string | null;
+  format: TemplateFormat;
+  width: number;
+  height: number;
+  version: number;
+  is_active: boolean;
+  variables: TemplateVariable[];
+  /**
+   * Rendered preview of the first slide. Not returned by the backend yet:
+   * until it is, the grid shows a placeholder.
+   */
+  preview_url?: string | null;
+  created_at: ISODateString;
+  updated_at: ISODateString;
+};
+
+export type TemplateBase = {
+  key: string;
+  version: string;
+};
+
+export type TemplateBaseDetail = {
+  key: string;
+  version: string;
+  preview_image: string;
+  json_schema: string;
+};
+
+/** Detail view: includes the Jinja2 source, too heavy for the list. */
+export type TemplateDetail = Template & {
+  html_content: string;
+};
+
 export type LogLevel = "info" | "warning" | "error";
 
 export type LogEntry = {

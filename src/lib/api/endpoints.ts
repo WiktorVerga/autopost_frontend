@@ -19,6 +19,11 @@ export const endpoints = {
     disconnect: "/instagram-accounts",
   },
   posts: "/posts",
+  templates: {
+    list: "/templates",
+    /** Templates offered by Autopost to every user. */
+    bases: "/templates/bases",
+  },
 } as const;
 
 /** Prefix the browser uses; `next.config.ts` rewrites it to the backend. */

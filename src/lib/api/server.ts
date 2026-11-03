@@ -20,6 +20,8 @@ import {
   LogEntry,
   Program,
   User, ContentPost,
+  Template,
+  TemplateDetail, TemplateBase, TemplateBaseDetail,
 } from "./types";
 
 const API_URL = process.env.API_URL ?? "https://localhost:8000";
@@ -66,6 +68,12 @@ export const serverApi = {
   logs: cache(() => serverFetch<LogEntry[]>(endpoints.logs)),
   programLogs: cache((programId: number, limit = 20) =>
     serverFetch<LogEntry[]>(`${endpoints.logs}?program_id=${programId}&limit=${limit}`),
+  ),
+  templates: cache(() => serverFetch<Template[]>(endpoints.templates.list)),
+  baseTemplates: cache(() => serverFetch<TemplateBase[]>(endpoints.templates.bases)),
+  baseDetails: cache((key: string) => serverFetch<TemplateBaseDetail>(`${endpoints.templates.bases}/${key}`)),
+  template: cache((id: number) =>
+    serverFetch<TemplateDetail>(`${endpoints.templates.list}/${id}`),
   ),
   instagramAccounts: cache(() => serverFetch<InstagramAccount[]>(endpoints.instagram.accounts)),
 };
