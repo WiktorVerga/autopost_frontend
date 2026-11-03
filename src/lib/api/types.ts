@@ -107,20 +107,38 @@ export type Template = {
 };
 
 export type TemplateBase = {
+  /** Value for `definition_json.base_template`. */
   key: string;
-  version: string;
+  /** Current version: templates with a lower `base_version` are outdated. */
+  version: number;
 };
 
-export type TemplateBaseDetail = {
-  key: string;
-  version: string;
+export type TemplateBaseDetail = TemplateBase & {
+  /** Preview image in base64. */
   preview_image: string;
-  json_schema: string;
+  /** JSON Schema of the definition, with defaults. */
+  json_schema: Record<string, unknown>;
+};
+
+/**
+ * Definition of a template: the JSON validated by its base's schema.
+ * Only `schema_version` and `base_template` are required: every other value
+ * falls back to the defaults declared in the schema.
+ */
+export type TemplateDefinition = {
+  schema_version: number;
+  base_template: string;
+  [key: string]: unknown;
 };
 
 /** Detail view: includes the Jinja2 source, too heavy for the list. */
 export type TemplateDetail = Template & {
   html_content: string;
+  /** Key of the base the template was created from. */
+  base_template: string;
+  base_version: number;
+  definition_json: TemplateDefinition;
+  jinja_content: string;
 };
 
 export type LogLevel = "info" | "warning" | "error";

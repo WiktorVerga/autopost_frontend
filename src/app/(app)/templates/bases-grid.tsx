@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { LayoutTemplateIcon } from "lucide-react";
 
-import {Template, TemplateBase} from "@/lib/api/types";
+import {TemplateBase} from "@/lib/api/types";
 import {serverApi, settle} from "@/lib/api/server";
 import {ApiNotice} from "@/components/api-notice";
 
@@ -23,7 +23,7 @@ export async function BasesGrid({ bases }: { bases: TemplateBase[] }) {
         if (data) {
           return (
               <li key={b.key} className="group">
-                <Link href={`/templates/${b.key}`} className="block">
+                <Link href={`/editor?base=${b.key}`} className="block">
                   <div className="aspect-4/5 overflow-hidden bg-muted">
                     {data.preview_image ? (
                         // eslint-disable-next-line @next/next/no-img-element -- storage URLs are external and not known in advance

@@ -13,20 +13,19 @@ import { endpoints } from "./endpoints";
 import { ApiError, toApiError } from "./errors";
 import {
   Post,
-  Content,
   Idea,
   IdeaCollection,
   InstagramAccount,
   LogEntry,
   Program,
-  User, ContentPost,
+  User,
   Template,
   TemplateDetail, TemplateBase, TemplateBaseDetail,
 } from "./types";
 
 const API_URL = process.env.API_URL ?? "https://localhost:8000";
 
-export async function serverFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function rawFetch(path: string, init: RequestInit, accept: string): Promise<Response> {
   const cookieHeader = (await cookies()).toString();
 
   let res: Response;
@@ -34,7 +33,7 @@ export async function serverFetch<T>(path: string, init: RequestInit = {}): Prom
     res = await fetch(`${API_URL}${path}`, {
       ...init,
       headers: {
-        Accept: "application/json",
+        Accept: accept,
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
         ...init.headers,
       },
@@ -45,8 +44,19 @@ export async function serverFetch<T>(path: string, init: RequestInit = {}): Prom
   }
 
   if (!res.ok) throw await toApiError(res);
+  return res;
+}
+
+export async function serverFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await rawFetch(path, init, "application/json");
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
+}
+
+/** Same as `serverFetch`, for endpoints that answer with plain text or HTML. */
+export async function serverFetchText(path: string, init: RequestInit = {}): Promise<string> {
+  const res = await rawFetch(path, init, "text/html, text/plain;q=0.9, */*;q=0.8");
+  return res.text();
 }
 
 // `cache` dedupes identical calls within the same request.
@@ -72,6 +82,7 @@ export const serverApi = {
   templates: cache(() => serverFetch<Template[]>(endpoints.templates.list)),
   baseTemplates: cache(() => serverFetch<TemplateBase[]>(endpoints.templates.bases)),
   baseDetails: cache((key: string) => serverFetch<TemplateBaseDetail>(`${endpoints.templates.bases}/${key}`)),
+  baseHtml: cache((key: string) => serverFetchText(endpoints.templates.baseHtml(key))),
   template: cache((id: number) =>
     serverFetch<TemplateDetail>(`${endpoints.templates.list}/${id}`),
   ),
