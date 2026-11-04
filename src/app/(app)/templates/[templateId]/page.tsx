@@ -2,14 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
-import { ArrowLeftIcon, LayoutTemplateIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon, LayoutTemplateIcon, PencilIcon } from "lucide-react";
 
 import { ApiNotice } from "@/components/api-notice";
 import { PageHeader, SectionTitle } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { serverApi, settle } from "@/lib/api/server";
 import type { TemplateFormat } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
+import { DeleteTemplateButton } from "./delete-template-button";
 
 export const metadata: Metadata = { title: "Template" };
 
@@ -54,6 +56,17 @@ async function TemplateDetails({ templateId }: { templateId: string }) {
         eyebrow="Template"
         title={template.name}
         description={template.description ?? undefined}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild>
+              <Link href={`/editor?template=${template.id}`}>
+                <PencilIcon />
+                Open in editor
+              </Link>
+            </Button>
+            <DeleteTemplateButton template={{ id: template.id, name: template.name }} />
+          </div>
+        }
       />
 
       <dl className="grid grid-cols-2 gap-6 border-b pb-8 md:grid-cols-4">
@@ -65,8 +78,10 @@ async function TemplateDetails({ templateId }: { templateId: string }) {
             {template.width} × {template.height}
           </span>
         </Fact>
-        <Fact label="Version">
-          <span className="font-mono text-xs">v{template.version}</span>
+        <Fact label="Base">
+          <span className="font-mono text-xs">
+            {template.base_template} · v{template.base_version}
+          </span>
         </Fact>
         <Fact label="Updated">
           <span className="font-mono text-xs">{formatDateTime(template.updated_at)}</span>
@@ -94,56 +109,65 @@ async function TemplateDetails({ templateId }: { templateId: string }) {
           </div>
         </section>
 
-        <section className="space-y-6">
-          <SectionTitle
-            aside={
-              <span className="font-mono text-xs text-muted-foreground">
-                {template.variables.length}
-              </span>
-            }
-          >
-            Variables
-          </SectionTitle>
-          {template.variables.length === 0 ? (
-            <p className="text-sm text-muted-foreground">This template has no variables.</p>
-          ) : (
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                  <th className="py-2 pr-4 font-normal">Name</th>
-                  <th className="py-2 pr-4 font-normal">Type</th>
-                  <th className="py-2 font-normal">Example</th>
-                </tr>
-              </thead>
-              <tbody>
-                {template.variables.map((v) => (
-                  <tr key={v.name} className="border-b align-top">
-                    <td className="py-3 pr-4 font-mono text-xs">{v.name}</td>
-                    <td className="py-3 pr-4 font-mono text-xs text-muted-foreground">{v.type}</td>
-                    <td className="py-3">
-                      <span className="line-clamp-3 break-words">{formatExample(v.example)}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
+        <Suspense fallback={<ProgramsSkeleton />}>
+          <TemplatePrograms templateId={template.id} />
+        </Suspense>
       </div>
-
-      <section className="space-y-6">
-        <SectionTitle>HTML source</SectionTitle>
-        <pre className="max-h-[32rem] overflow-auto border bg-muted/40 p-4 font-mono text-xs leading-relaxed">
-          <code>{template.html_content}</code>
-        </pre>
-      </section>
     </div>
   );
 }
 
-function formatExample(value: unknown) {
-  if (value === null || value === undefined) return "—";
-  return typeof value === "string" ? value : JSON.stringify(value);
+async function TemplatePrograms({ templateId }: { templateId: number }) {
+  const { data: programs, error } = await settle(serverApi.programs());
+
+  const usedBy = programs?.filter((p) => p.template_id === templateId) ?? [];
+
+  return (
+    <section className="space-y-1">
+      <SectionTitle
+        aside={
+          error ? undefined : (
+            <span className="font-mono text-xs text-muted-foreground">{usedBy.length}</span>
+          )
+        }
+      >
+        Used in programs
+      </SectionTitle>
+      {error ? (
+        <ApiNotice error={error} />
+      ) : usedBy.length === 0 ? (
+        <p className="py-4 text-sm text-muted-foreground">No program uses this template yet.</p>
+      ) : (
+        <ul className="divide-y">
+          {usedBy.map((p) => {
+            const active = p.is_active && p.idea_collection_id !== null;
+            return (
+              <li key={p.id}>
+                <Link
+                  href={`/programs/${p.id}`}
+                  className="group flex items-center justify-between gap-6 py-4"
+                >
+                  <span className="flex min-w-0 items-center gap-2 text-[15px] font-medium">
+                    <span
+                      className={`size-1.5 shrink-0 rounded-full ${active ? "bg-signal" : "bg-muted-foreground/40"}`}
+                      aria-label={active ? "Active" : "Inactive"}
+                    />
+                    <span className="truncate group-hover:underline group-hover:underline-offset-4">
+                      {p.name}
+                    </span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground group-hover:text-foreground">
+                    Change template
+                    <ArrowRightIcon className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
 }
 
 function Fact({ label, children }: { label: string; children: ReactNode }) {
@@ -157,6 +181,17 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+function ProgramsSkeleton() {
+  return (
+    <div className="space-y-3">
+      <Skeleton className="h-6 w-40" />
+      {Array.from({ length: 3 }).map((_, i) => (
+        <Skeleton key={i} className="h-12 w-full" />
+      ))}
+    </div>
+  );
+}
+
 function TemplateSkeleton() {
   return (
     <div className="space-y-12">
@@ -166,11 +201,7 @@ function TemplateSkeleton() {
       </div>
       <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <Skeleton className="aspect-4/5 w-full max-w-sm rounded-none" />
-        <div className="space-y-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-8 w-full" />
-          ))}
-        </div>
+        <ProgramsSkeleton />
       </div>
     </div>
   );

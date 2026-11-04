@@ -62,9 +62,7 @@ export function SettingsPanel({
         <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
           Settings
         </p>
-        {schema.description ? (
-          <p className="text-xs leading-relaxed text-muted-foreground">{schema.description}</p>
-        ) : null}
+
         {fixed.length > 0 ? (
           <dl className="flex flex-wrap gap-x-6 gap-y-1">
             {fixed.map(([key, node]) => (

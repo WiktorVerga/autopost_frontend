@@ -35,6 +35,8 @@ function first(value: string | string[] | undefined) {
 async function EditorLoader({ base, templateId }: { base?: string; templateId?: string }) {
   let baseKey: string;
   let name: string;
+  let description: string | null = null;
+  let updatedAt: string | null = null;
   let definition: TemplateDefinition | null = null;
 
   if (templateId) {
@@ -48,6 +50,8 @@ async function EditorLoader({ base, templateId }: { base?: string; templateId?: 
     }
     baseKey = template.base_template;
     name = template.name;
+    description = template.description;
+    updatedAt = template.updated_at;
     definition = template.definition_json;
   } else if (base) {
     baseKey = base;
@@ -83,11 +87,15 @@ async function EditorLoader({ base, templateId }: { base?: string; templateId?: 
 
   return (
     <TemplateEditor
-      mode={definition ? "template" : "base"}
+      mode={templateId ? "template" : "base"}
       name={name}
+      description={description}
+      updatedAt={updatedAt}
       schema={schema}
       html={html.data!}
       initialValues={initialValues}
+      templateid={Number(templateId)}
+      baseKey={baseKey}
     />
   );
 }

@@ -4,6 +4,7 @@
  * Draft based on the agreed data model — align field names with the backend
  * Pydantic schemas (or generate them from its OpenAPI spec) once they are final.
  */
+import {JsonObject} from "@/lib/template/schema";
 
 export type Id = number;
 export type ISODateString = string;
@@ -40,6 +41,8 @@ export type Program = {
   idea_collection_id: Id | null;
   /** Not returned by the backend yet: every program produces carousels. */
   content_type?: ContentType;
+  /** Template the program renders its content with. Not returned by the backend yet. */
+  template_id?: Id | null;
   /** Instagram account the program publishes to. */
   instagram_account_id: Id;
   /** Standard 5-field cron expression; parse it with `cronToSchedule` (lib/cron.ts). */
@@ -139,6 +142,19 @@ export type TemplateDetail = Template & {
   base_version: number;
   definition_json: TemplateDefinition;
   jinja_content: string;
+};
+
+export type CreateTemplateInput = {
+  name: string;
+  description: string | null;
+  base_template: string;
+  definition_json: JsonObject;
+};
+
+export type UpdateTemplateInput = {
+  name: string;
+  description: string | null;
+  definition_json: JsonObject;
 };
 
 export type LogLevel = "info" | "warning" | "error";

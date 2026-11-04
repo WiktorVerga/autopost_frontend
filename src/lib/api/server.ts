@@ -20,7 +20,7 @@ import {
   Program,
   User,
   Template,
-  TemplateDetail, TemplateBase, TemplateBaseDetail,
+  TemplateDetail, TemplateBase, TemplateBaseDetail, Id,
 } from "./types";
 
 const API_URL = process.env.API_URL ?? "https://localhost:8000";
