@@ -120,7 +120,7 @@ function Section({
     <details open className="group border-b">
       <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-3 select-none hover:bg-muted/50 [&::-webkit-details-marker]:hidden">
         <span className="font-mono text-[11px] uppercase tracking-[0.16em]">{title}</span>
-        <ChevronDownIcon className="size-4 text-muted-foreground -rotate-90 transition-transform group-open:rotate-0" />
+        <ChevronDownIcon className="size-4 text-muted-foreground <<<<<<<<<<<<-rotate-90 transition-transform group-open:rotate-0" />
       </summary>
       <div className="space-y-5 px-5 pt-1 pb-6">
         {description ? (

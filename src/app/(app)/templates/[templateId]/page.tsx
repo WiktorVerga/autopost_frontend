@@ -95,9 +95,9 @@ async function TemplateDetails({ templateId }: { templateId: string }) {
             className="w-full max-w-sm overflow-hidden bg-muted"
             style={{ aspectRatio: `${template.width} / ${template.height}` }}
           >
-            {template.preview_url ? (
+            {template.preview_image ? (
               // eslint-disable-next-line @next/next/no-img-element -- storage URLs are external and not known in advance
-              <img src={template.preview_url} alt="" className="size-full object-cover" />
+              <img src={template.preview_image} alt="" className="size-full object-cover" />
             ) : (
               <div className="flex size-full flex-col items-center justify-center gap-3 text-muted-foreground">
                 <LayoutTemplateIcon className="size-8" strokeWidth={1.25} />

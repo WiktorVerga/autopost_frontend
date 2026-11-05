@@ -41,8 +41,8 @@ export type Program = {
   idea_collection_id: Id | null;
   /** Not returned by the backend yet: every program produces carousels. */
   content_type?: ContentType;
-  /** Template the program renders its content with. Not returned by the backend yet. */
-  template_id?: Id | null;
+  /** Template the program renders its content with. Required to activate the program. */
+  template_id: Id | null;
   /** Instagram account the program publishes to. */
   instagram_account_id: Id;
   /** Standard 5-field cron expression; parse it with `cronToSchedule` (lib/cron.ts). */
@@ -104,7 +104,7 @@ export type Template = {
    * Rendered preview of the first slide. Not returned by the backend yet:
    * until it is, the grid shows a placeholder.
    */
-  preview_url?: string | null;
+  preview_image?: string | null;
   created_at: ISODateString;
   updated_at: ISODateString;
 };
@@ -142,6 +142,7 @@ export type TemplateDetail = Template & {
   base_version: number;
   definition_json: TemplateDefinition;
   jinja_content: string;
+  preview_image: string;
 };
 
 export type CreateTemplateInput = {
@@ -203,6 +204,8 @@ export type CreateProgramInput = {
   is_active: boolean;
   instagram_account_id: Id | null;
   idea_collection_id: Id | null;
+  /** Template the content is rendered with. Required when is_active is true. */
+  template_id: Id | null;
   /*content_type: ContentType;*/
   /** Instagram account the program publishes to. Required when mode is "publish". */
 

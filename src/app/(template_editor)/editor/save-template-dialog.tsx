@@ -51,6 +51,8 @@ export default function SaveTemplateDialog(
     const [name, setName] = useState(nameTemp || "");
     const [description, setDescription] = useState(descriptionTemp || "");
 
+    const [saving, setSaving] = useState(false);
+
     async function handleSave(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
@@ -58,6 +60,7 @@ export default function SaveTemplateDialog(
         const trimmedDescription = description.trim();
         if (!trimmedName || trimmedName.length > NAME_MAX_LENGTH) return;
 
+        setSaving(true);
         if (templateid) {
             // Salvare template esistente
 
@@ -71,6 +74,7 @@ export default function SaveTemplateDialog(
                 await api.updateTemplate(templateid, payload)
                 // The edits are on the server now: the local draft is no longer needed.
                 clearTemplateDraft(templateid);
+                setSaving(false);
                 toast.success("Template saved");
                 setOpen(false);
                 // Reload the saved template, so the editor is no longer "Unsaved".
@@ -90,6 +94,7 @@ export default function SaveTemplateDialog(
                 }
 
                 const template = await api.createTemplate(payload)
+                setSaving(false);
                 toast.success("Template created");
                 setOpen(false);
                 router.push("/editor?template=" + template.id)
@@ -149,9 +154,14 @@ export default function SaveTemplateDialog(
                         <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
                             Cancel
                         </Button>
-                        <Button type="submit">
-                            Save
-                        </Button>
+                        {saving?
+                            <Button type="submit" disabled>
+                                Saving...
+                            </Button>
+                            : <Button type="submit">
+                                Save
+                            </Button>
+                        }
                     </DialogFooter>
                 </form>
             </DialogContent>

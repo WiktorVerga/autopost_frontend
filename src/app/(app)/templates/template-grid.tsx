@@ -14,10 +14,10 @@ export function TemplateGrid({ templates }: { templates: Template[] }) {
         <li key={t.id} className="group">
           <Link href={`/templates/${t.id}`} className="block">
             <div className="aspect-4/5 overflow-hidden bg-muted">
-              {t.preview_url ? (
+              {t.preview_image ? (
                 // eslint-disable-next-line @next/next/no-img-element -- storage URLs are external and not known in advance
                 <img
-                  src={t.preview_url}
+                  src={t.preview_image}
                   alt=""
                   className="size-full object-cover transition-opacity group-hover:opacity-90"
                 />

@@ -46,12 +46,17 @@ export default function ProgramsPage() {
 }
 
 async function NewProgramAction() {
-  const [collections, accounts] = await Promise.all([
+  const [collections, templates, accounts] = await Promise.all([
     settle(serverApi.collections()),
+    settle(serverApi.templates()),
     settle(serverApi.instagramAccounts()),
   ]);
   return (
-    <NewProgramDialog collections={collections.data ?? []} instagramAccounts={accounts.data ?? []} />
+    <NewProgramDialog
+      collections={collections.data ?? []}
+      templates={templates.data ?? []}
+      instagramAccounts={accounts.data ?? []}
+    />
   );
 }
 

@@ -47,9 +47,10 @@ async function ProgramDetail({ programId }: { programId: string }) {
   const id = Number(programId);
   if (!Number.isInteger(id) || id <= 0) notFound();
 
-  const [program, collections, accounts] = await Promise.all([
+  const [program, collections, templates, accounts] = await Promise.all([
     settle(serverApi.program(id)),
     settle(serverApi.collections()),
+    settle(serverApi.templates()),
     settle(serverApi.instagramAccounts()),
   ]);
 
@@ -101,6 +102,7 @@ async function ProgramDetail({ programId }: { programId: string }) {
           key={JSON.stringify(p)}
           program={p}
           collections={collections.data ?? []}
+          templates={templates.data ?? []}
           instagramAccounts={accounts.data ?? []}
         />
       </section>

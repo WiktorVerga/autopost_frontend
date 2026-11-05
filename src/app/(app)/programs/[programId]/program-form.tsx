@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -22,17 +23,21 @@ import type {
   InstagramAccount,
   Program,
   ProgramMode,
+  Template,
   UpdateProgramInput,
 } from "@/lib/api/types";
 import { cronToSchedule, scheduleToCron } from "@/lib/cron";
+import { activationError } from "@/lib/program";
 import { defaultScheduleDraft, toDraft, toSchedule, validateSchedule } from "@/lib/schedule";
 import { SchedulePicker } from "../schedule-picker";
 
 const NO_COLLECTION = "none";
+const NO_TEMPLATE = "none";
 
 type FormState = {
   name: string;
   collection: string;
+  template: string;
   account: string;
   mode: ProgramMode;
   active: boolean;
@@ -42,6 +47,7 @@ function initialState(program: Program): FormState {
   return {
     name: program.name,
     collection: program.idea_collection_id === null ? NO_COLLECTION : String(program.idea_collection_id),
+    template: program.template_id === null ? NO_TEMPLATE : String(program.template_id),
     account: String(program.instagram_account_id),
     mode: program.mode,
     active: program.is_active,
@@ -51,10 +57,12 @@ function initialState(program: Program): FormState {
 export function ProgramForm({
   program,
   collections,
+  templates,
   instagramAccounts,
 }: {
   program: Program;
   collections: IdeaCollection[];
+  templates: Template[];
   instagramAccounts: InstagramAccount[];
 }) {
   const router = useRouter();
@@ -78,12 +86,29 @@ export function ProgramForm({
   if (form.collection !== saved.collection) {
     changes.idea_collection_id = form.collection === NO_COLLECTION ? null : Number(form.collection);
   }
+  if (form.template !== saved.template) {
+    changes.template_id = form.template === NO_TEMPLATE ? null : Number(form.template);
+  }
   if (form.account !== saved.account) changes.instagram_account_id = Number(form.account);
   if (form.mode !== saved.mode) changes.mode = form.mode;
   if (form.active !== saved.active) changes.is_active = form.active;
   if (savedCron === null ? scheduleEdited : cron !== savedCron) changes.cron_expression = cron;
   const dirty = Object.keys(changes).length > 0;
   const activating = form.active && !saved.active;
+  const activeError = form.active
+    ? activationError(form.collection !== NO_COLLECTION, form.template !== NO_TEMPLATE)
+    : null;
+
+  function onActiveChange(active: boolean) {
+    const error = active
+      ? activationError(form.collection !== NO_COLLECTION, form.template !== NO_TEMPLATE)
+      : null;
+    if (error) {
+      toast.error("The program can't be activated yet", { description: error });
+      return;
+    }
+    set({ active });
+  }
 
   function reset() {
     setForm(saved);
@@ -95,6 +120,13 @@ export function ProgramForm({
     if (!name || !dirty) return;
     if (scheduleError) {
       toast.error(scheduleError);
+      return;
+    }
+    // The collection or template can be cleared after the switch was turned on.
+    if (activeError) {
+      toast.error("An active program needs a collection and a template", {
+        description: `${activeError} Otherwise turn the program off.`,
+      });
       return;
     }
 
@@ -116,6 +148,11 @@ export function ProgramForm({
   const accounts = instagramAccounts.some((a) => a.id === program.instagram_account_id)
     ? instagramAccounts
     : [{ id: program.instagram_account_id, handle: null, updated_at: null }, ...instagramAccounts];
+  // Same for the saved template.
+  const templateOptions =
+    program.template_id === null || templates.some((t) => t.id === program.template_id)
+      ? templates
+      : [{ id: program.template_id, name: `#${program.template_id}` }, ...templates];
 
   return (
     <form action={onSubmit} className="grid max-w-2xl gap-6">
@@ -142,7 +179,7 @@ export function ProgramForm({
             id="active"
             size="lg"
             checked={form.active}
-            onCheckedChange={(active) => set({ active })}
+            onCheckedChange={onActiveChange}
             className="data-[state=checked]:bg-signal"
           />
         </div>
@@ -151,9 +188,11 @@ export function ProgramForm({
             Once saved, this program will run automatically at every time set by its schedule
             {form.mode === "publish" ? " and post the content to Instagram" : ""}, from its next
             scheduled run onward.
-            {form.collection === NO_COLLECTION
-              ? " Pick a collection first: without one it stays inactive."
-              : ""}
+          </p>
+        ) : null}
+        {activeError ? (
+          <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm">
+            {activeError} Otherwise turn the program off.
           </p>
         ) : null}
         {form.active !== saved.active ? (
@@ -173,7 +212,7 @@ export function ProgramForm({
         />
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-5 sm:grid-cols-3">
         <div className="grid gap-2">
           <Label htmlFor="collection_id">Collection</Label>
           <Select value={form.collection} onValueChange={(collection) => set({ collection })}>
@@ -189,6 +228,32 @@ export function ProgramForm({
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="template_id">Template</Label>
+          <Select value={form.template} onValueChange={(template) => set({ template })}>
+            <SelectTrigger id="template_id" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_TEMPLATE}>None (inactive)</SelectItem>
+              {templateOptions.map((t) => (
+                <SelectItem key={t.id} value={String(t.id)}>
+                  {t.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {templates.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              No templates yet.{" "}
+              <Link href="/templates" className="text-foreground underline underline-offset-4">
+                Create one
+              </Link>
+              .
+            </p>
+          ) : null}
         </div>
 
         <div className="grid gap-2">
