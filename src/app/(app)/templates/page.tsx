@@ -3,16 +3,50 @@ import { Suspense } from "react";
 import { LayoutTemplateIcon } from "lucide-react";
 
 import { ApiNotice } from "@/components/api-notice";
+import {
+  ListFilters,
+  ListFiltersFallback,
+  ListNoResults,
+  ListPagination,
+  type ListFilter,
+} from "@/components/data-list";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader, SectionTitle } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { serverApi, settle } from "@/lib/api/server";
+import type { TemplateBase } from "@/lib/api/types";
+import { hasActiveFilters, listQuery, paginate, parseListParams } from "@/lib/list-params";
 import { TemplateGrid } from "./template-grid";
 import {BasesGrid} from "@/app/(app)/templates/bases-grid";
 
 export const metadata: Metadata = { title: "Templates" };
 
-export default function TemplatesPage() {
+const PATH = "/templates";
+
+type SearchParams = Record<string, string | string[] | undefined>;
+
+const SEARCH_FILTER = {
+  type: "search",
+  param: "q",
+  label: "Search templates",
+  placeholder: "Search name or description…",
+} as const satisfies ListFilter;
+
+function templateFilters(bases: TemplateBase[]): ListFilter[] {
+  if (bases.length === 0) return [SEARCH_FILTER];
+  return [
+    SEARCH_FILTER,
+    {
+      type: "select",
+      param: "base",
+      label: "Base",
+      allLabel: "All bases",
+      options: bases.map((b) => ({ value: b.key, label: b.key })),
+    },
+  ];
+}
+
+export default function TemplatesPage({ searchParams }: PageProps<"/templates">) {
   return (
     <div className="space-y-10">
       <PageHeader
@@ -23,8 +57,13 @@ export default function TemplatesPage() {
 
       <section className="space-y-6">
         <SectionTitle>Your templates</SectionTitle>
+        <Suspense fallback={<ListFiltersFallback filters={[SEARCH_FILTER]} />}>
+          <UserTemplatesFilters />
+        </Suspense>
         <Suspense fallback={<GridSkeleton count={4} />}>
-          <UserTemplatesSection />
+          {searchParams.then((sp) => (
+            <UserTemplatesSection searchParams={sp} />
+          ))}
         </Suspense>
       </section>
 
@@ -52,11 +91,46 @@ async function BaseTemplatesSection() {
   return <BasesGrid bases={data} />;
 }
 
-async function UserTemplatesSection() {
-  const { data, error } = await settle(serverApi.templates());
+async function UserTemplatesFilters() {
+  const bases = await settle(serverApi.baseTemplates());
+  return <ListFilters filters={templateFilters(bases.data ?? [])} />;
+}
+
+async function UserTemplatesSection({ searchParams }: { searchParams: SearchParams }) {
+  const bases = await settle(serverApi.baseTemplates());
+  const params = parseListParams(searchParams, {
+    filters: ["q", "base"],
+    // Unknown base keys would make the backend answer 422.
+    validate: bases.data ? { base: bases.data.map((b) => b.key) } : {},
+  });
+
+  const { data, error } = await settle(
+    serverApi.templates(listQuery(params, { rename: { q: "search", base: "base_template" } })),
+  );
   if (error) return <ApiNotice error={error} />;
 
-  if (data.length === 0) {
+  const page = paginate(data, params);
+
+  if (page.items.length === 0) {
+    if (hasActiveFilters(params)) {
+      return (
+        <ListNoResults
+          resetHref={PATH}
+          title="No matching templates"
+          description="None of your templates matches the current search and base."
+        />
+      );
+    }
+    if (page.page > 1) {
+      return (
+        <ListNoResults
+          resetHref={PATH}
+          title="This page is empty"
+          description="There are no templates this far. Go back to the first page."
+          resetLabel="First page"
+        />
+      );
+    }
     return (
       <EmptyState
         icon={LayoutTemplateIcon}
@@ -66,7 +140,12 @@ async function UserTemplatesSection() {
     );
   }
 
-  return <TemplateGrid templates={data} />;
+  return (
+    <div className="space-y-10">
+      <TemplateGrid templates={page.items} />
+      <ListPagination pagination={page} />
+    </div>
+  );
 }
 
 function GridSkeleton({ count }: { count: number }) {

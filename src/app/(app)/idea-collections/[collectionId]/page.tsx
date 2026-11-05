@@ -5,11 +5,19 @@ import {Suspense} from "react";
 import {ArrowLeftIcon, LightbulbIcon, PlusIcon} from "lucide-react";
 
 import {ApiNotice} from "@/components/api-notice";
+import {
+    ListFilters,
+    ListFiltersFallback,
+    ListNoResults,
+    ListPagination,
+    type ListFilter,
+} from "@/components/data-list";
 import {EmptyState} from "@/components/empty-state";
 import {PageHeader, SectionTitle} from "@/components/page-header";
 import {Button} from "@/components/ui/button";
 import {Skeleton} from "@/components/ui/skeleton";
-import {serverApi, settle} from "@/lib/api/server";
+import {ALL_ITEMS, serverApi, settle} from "@/lib/api/server";
+import {listQuery, paginate, parseListParams} from "@/lib/list-params";
 import type {Idea} from "@/lib/api/types";
 import {IdeaCategoriesProvider} from "./category-combobox";
 import {CollectionActions} from "./collection-actions";
@@ -19,7 +27,9 @@ import {columns} from "@/app/(app)/idea-collections/[collectionId]/comlumns";
 
 export const metadata: Metadata = {title: "Idea collection"};
 
-export default function IdeaCollectionPage({params}: PageProps<"/idea-collections/[collectionId]">) {
+type SearchParams = Record<string, string | string[] | undefined>;
+
+export default function IdeaCollectionPage({params, searchParams}: PageProps<"/idea-collections/[collectionId]">) {
     return (
         <div className="space-y-6">
             <Link
@@ -31,28 +41,54 @@ export default function IdeaCollectionPage({params}: PageProps<"/idea-collection
             </Link>
 
             <Suspense fallback={<CollectionSkeleton/>}>
-                {params.then(({collectionId}) => (
-                    <Collection collectionId={collectionId}/>
+                {Promise.all([params, searchParams]).then(([{collectionId}, sp]) => (
+                    <Collection collectionId={collectionId} searchParams={sp}/>
                 ))}
             </Suspense>
         </div>
     );
 }
 
-async function Collection({collectionId}: { collectionId: string }) {
+async function Collection({collectionId, searchParams}: { collectionId: string; searchParams: SearchParams }) {
     const id = Number(collectionId);
     if (!Number.isInteger(id) || id <= 0) notFound();
 
-    const [collection, ideas] = await Promise.all([
+    const params = parseListParams(searchParams, {filters: ["q", "category", "order"]});
+
+    const [collection, allIdeas, ideas] = await Promise.all([
         settle(serverApi.collection(id)),
-        settle(serverApi.collectionIdeas(id)),
+        // Whole collection: categories for the filter and the dialogs, and the idea count.
+        settle(serverApi.ideas(`${ALL_ITEMS}&idea_collection_id=${id}`)),
+        // The page shown in the table.
+        settle(serverApi.ideas(listQuery(params, {rename: {q: "search"}, extra: {idea_collection_id: id}}))),
     ]);
 
     if (collection.error?.status === 404) notFound();
     if (collection.error) return <ApiNotice error={collection.error}/>;
 
+    const categories = getCategories(allIdeas.data ?? []);
+    const filters: ListFilter[] = [
+        {type: "search", param: "q", label: "Search ideas", placeholder: "Search title or description…"},
+        {
+            type: "select" as const,
+            param: "order",
+            label: "Order",
+            allLabel: "Default Order",
+            options: [{value: "oldest", label: "Oldest"}, {value: "newest", label: "Newest"}],
+        },
+        ...(categories.length > 0
+            ? [{
+                type: "select" as const,
+                param: "category",
+                label: "Category",
+                allLabel: "All categories",
+                options: categories.map((c) => ({value: c, label: c})),
+            }]
+            : []),
+    ];
+
     return (
-        <IdeaCategoriesProvider categories={getCategories(ideas.data ?? [])}>
+        <IdeaCategoriesProvider categories={categories}>
             <div className="space-y-10">
                 <PageHeader
                     eyebrow="Idea collection"
@@ -60,7 +96,7 @@ async function Collection({collectionId}: { collectionId: string }) {
                     description="Manage the collection and its ideas."
                     actions={
                         <>
-                            <CollectionActions collection={collection.data} ideaCount={ideas.data?.length}/>
+                            <CollectionActions collection={collection.data} ideaCount={allIdeas.data?.length}/>
                             <IdeaDialog collectionId={id}>
                                 <Button>
                                     <PlusIcon/>
@@ -73,26 +109,65 @@ async function Collection({collectionId}: { collectionId: string }) {
 
                 {ideas.error ? (
                     <ApiNotice error={ideas.error}/>
-                ) : ideas.data.length === 0 ? (
+                ) : allIdeas.data?.length === 0 ? (
                     <EmptyState
                         icon={LightbulbIcon}
                         title="No ideas yet"
                         description="Add the first idea to this collection: a short brief is enough, Autopost turns it into the post."
                     />
                 ) : (
-                    <section className="space-y-1">
-
+                    <section className="space-y-4">
                         <SectionTitle
-                            aside={<span className="font-mono text-xs text-muted-foreground">{ideas.data.length}</span>}>
+                            aside={
+                                <span className="font-mono text-xs text-muted-foreground">
+                                    {allIdeas.data?.length ?? ""}
+                                </span>
+                            }>
                             Ideas
                         </SectionTitle>
 
-                        <DataTable columns={columns} data={ideas.data} />
+                        <Suspense fallback={<ListFiltersFallback filters={filters}/>}>
+                            <ListFilters filters={filters}/>
+                        </Suspense>
 
+                        <IdeasPage ideas={ideas.data} params={params} collectionId={id}/>
                     </section>
                 )}
             </div>
         </IdeaCategoriesProvider>
+    );
+}
+
+function IdeasPage({ideas, params, collectionId}: {
+    ideas: Idea[];
+    params: ReturnType<typeof parseListParams<"q" | "category">>;
+    collectionId: number;
+}) {
+    const page = paginate(ideas, params);
+    const resetHref = `/idea-collections/${collectionId}`;
+
+    if (page.items.length === 0) {
+        return page.page > 1 && !params.filters.q && !params.filters.category ? (
+            <ListNoResults
+                resetHref={resetHref}
+                title="This page is empty"
+                description="There are no ideas this far. Go back to the first page."
+                resetLabel="First page"
+            />
+        ) : (
+            <ListNoResults
+                resetHref={resetHref}
+                title="No matching ideas"
+                description="No idea in this collection matches the current search and category."
+            />
+        );
+    }
+
+    return (
+        <div className="space-y-4">
+            <DataTable columns={columns} data={page.items}/>
+            <ListPagination pagination={page}/>
+        </div>
     );
 }
 

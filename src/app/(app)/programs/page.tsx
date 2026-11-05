@@ -4,20 +4,57 @@ import { Suspense } from "react";
 import { ArrowRightIcon, CalendarClockIcon, PlusIcon } from "lucide-react";
 
 import { ApiNotice } from "@/components/api-notice";
+import {
+  ListFilters,
+  ListFiltersFallback,
+  ListNoResults,
+  ListPagination,
+  type ListFilter,
+} from "@/components/data-list";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader, SectionTitle } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { serverApi, settle } from "@/lib/api/server";
+import { ALL_ITEMS, serverApi, settle } from "@/lib/api/server";
+import type { IdeaCollection } from "@/lib/api/types";
 import { cronToSchedule } from "@/lib/cron";
 import { formatDateTime, modeLabel } from "@/lib/format";
+import { hasActiveFilters, isId, listQuery, paginate, parseListParams } from "@/lib/list-params";
 import { describeSchedule } from "@/lib/schedule";
 import { NewProgramDialog } from "./new-program-dialog";
 
 export const metadata: Metadata = { title: "Programs" };
 
-export default function ProgramsPage() {
+const PATH = "/programs";
+
+type SearchParams = Record<string, string | string[] | undefined>;
+
+const STATUS_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+] as const;
+
+const MODE_OPTIONS = Object.entries(modeLabel).map(([value, label]) => ({ value, label }));
+
+/** Filters that don't depend on data (the collection one is added once collections load). */
+const BASE_FILTERS = [
+  { type: "search", param: "q", label: "Search programs", placeholder: "Search programs…", maxLength: 100 },
+  { type: "select", param: "status", label: "Status", allLabel: "Any status", options: STATUS_OPTIONS },
+  { type: "select", param: "mode", label: "Mode", allLabel: "Any mode", options: MODE_OPTIONS },
+] as const satisfies readonly ListFilter[];
+
+function collectionFilter(collections: IdeaCollection[]): ListFilter {
+  return {
+    type: "select",
+    param: "collection",
+    label: "Collection",
+    allLabel: "All collections",
+    options: collections.map((c) => ({ value: String(c.id), label: c.name })),
+  };
+}
+
+export default function ProgramsPage({ searchParams }: PageProps<"/programs">) {
   return (
     <div className="space-y-10">
       <PageHeader
@@ -38,9 +75,17 @@ export default function ProgramsPage() {
         }
       />
 
-      <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-        <ProgramsList />
-      </Suspense>
+      <div className="space-y-6">
+        <Suspense fallback={<ListFiltersFallback filters={BASE_FILTERS} />}>
+          <ProgramsFilters />
+        </Suspense>
+
+        <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+          {searchParams.then((sp) => (
+            <ProgramsList searchParams={sp} />
+          ))}
+        </Suspense>
+      </div>
     </div>
   );
 }
@@ -60,16 +105,57 @@ async function NewProgramAction() {
   );
 }
 
-async function ProgramsList() {
+async function ProgramsFilters() {
+  const collections = await settle(serverApi.collections(ALL_ITEMS));
+  return <ListFilters filters={[...BASE_FILTERS, collectionFilter(collections.data ?? [])]} />;
+}
+
+async function ProgramsList({ searchParams }: { searchParams: SearchParams }) {
+  const params = parseListParams(searchParams, {
+    filters: ["q", "status", "mode", "collection"],
+    validate: {
+      status: STATUS_OPTIONS.map((o) => o.value),
+      mode: MODE_OPTIONS.map((o) => o.value),
+      collection: isId,
+    },
+  });
+  const { status } = params.filters;
+  const query = listQuery(params, {
+    rename: { q: "search", collection: "idea_collection_id" },
+    omit: ["status"],
+    extra: { is_active: status === undefined ? undefined : status === "active" },
+  });
+
   const [programs, collections, accounts] = await Promise.all([
-    settle(serverApi.programs()),
-    settle(serverApi.collections()),
+    settle(serverApi.programs(query)),
+    settle(serverApi.collections(ALL_ITEMS)),
     settle(serverApi.instagramAccounts()),
   ]);
 
   if (programs.error) return <ApiNotice error={programs.error} />;
 
-  if (programs.data.length === 0) {
+  const page = paginate(programs.data, params);
+
+  if (page.items.length === 0) {
+    if (hasActiveFilters(params)) {
+      return (
+        <ListNoResults
+          resetHref={PATH}
+          title="No matching programs"
+          description="No program matches the current search and filters."
+        />
+      );
+    }
+    if (page.page > 1) {
+      return (
+        <ListNoResults
+          resetHref={PATH}
+          title="This page is empty"
+          description="There are no programs this far. Go back to the first page."
+          resetLabel="First page"
+        />
+      );
+    }
     return (
       <EmptyState
         icon={CalendarClockIcon}
@@ -87,12 +173,16 @@ async function ProgramsList() {
   return (
     <section className="space-y-1">
       <SectionTitle
-        aside={<span className="font-mono text-xs text-muted-foreground">{programs.data.length}</span>}
+        aside={
+          <span className="font-mono text-xs text-muted-foreground">
+            {page.hasPrev || page.hasNext ? `${page.from}–${page.to}` : page.items.length}
+          </span>
+        }
       >
         Programs
       </SectionTitle>
       <ul className="divide-y">
-        {programs.data.map((p) => {
+        {page.items.map((p) => {
           const active = p.is_active && p.idea_collection_id !== null;
           return (
             <li key={p.id}>
@@ -131,6 +221,7 @@ async function ProgramsList() {
           );
         })}
       </ul>
+      <ListPagination pagination={page} />
     </section>
   );
 }

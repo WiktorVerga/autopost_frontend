@@ -1,21 +1,20 @@
 import {
-    columnFilteringFeature,
-    columnVisibilityFeature, createFilteredRowModel, createPaginatedRowModel, createSortedRowModel,
-    filterFn_includesString,
-    rowPaginationFeature, rowSelectionFeature, rowSortingFeature, sortFn_alphanumeric, sortFn_text,
-    tableFeatures
-} from "@tanstack/react-table";
-
-export const features = tableFeatures({
-    columnFilteringFeature,
     columnVisibilityFeature,
-    rowPaginationFeature,
+    createSortedRowModel,
     rowSelectionFeature,
     rowSortingFeature,
-    filteredRowModel: createFilteredRowModel(),
-    paginatedRowModel: createPaginatedRowModel(),
+    sortFn_alphanumeric,
+    sortFn_text,
+    tableFeatures,
+} from "@tanstack/react-table";
+
+// Search, filters and pagination happen on the server (see `@/components/data-list`):
+// the table only gets one page of rows, and sorting reorders that page.
+export const features = tableFeatures({
+    columnVisibilityFeature,
+    rowSelectionFeature,
+    rowSortingFeature,
     sortedRowModel: createSortedRowModel(),
-    filterFns: { includesString: filterFn_includesString },
     sortFns: { alphanumeric: sortFn_alphanumeric, text: sortFn_text },
 })
 

@@ -159,6 +159,7 @@ export type UpdateTemplateInput = {
 };
 
 export type LogLevel = "info" | "warning" | "error";
+export const LogLevelValues = ["info", "warning", "error"] as const;
 
 export type LogEntry = {
   id: Id;

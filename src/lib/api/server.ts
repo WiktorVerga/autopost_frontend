@@ -59,27 +59,37 @@ export async function serverFetchText(path: string, init: RequestInit = {}): Pro
   return res.text();
 }
 
+/**
+ * Query for lookups that need the whole list (filter options, id → name maps):
+ * the backend returns 100 items by default and at most 500.
+ */
+export const ALL_ITEMS = "?limit=500";
+
 // `cache` dedupes identical calls within the same request.
+// List endpoints take an optional query string (see `listQuery` in `@/lib/list-params`).
 export const serverApi = {
   me: cache(() => serverFetch<User>(endpoints.auth.me)),
-  collections: cache(() => serverFetch<IdeaCollection[]>(endpoints.collections)),
+  /** `query`: optional query string (e.g. from `listQuery`) for search and pagination. */
+  collections: cache((query = "") =>
+    serverFetch<IdeaCollection[]>(`${endpoints.collections}${query}`),
+  ),
   collection: cache((id: number) =>
     serverFetch<IdeaCollection>(`${endpoints.collections}/${id}`),
   ),
-  ideas: cache(() => serverFetch<Idea[]>(endpoints.ideas)),
+  ideas: cache((query = "") => serverFetch<Idea[]>(`${endpoints.ideas}${query}`)),
   idea: cache((id: number) => serverFetch<Idea>(`${endpoints.ideas}/${id}`)),
   collectionIdeas: cache((collectionId: number) =>
     serverFetch<Idea[]>(`${endpoints.ideas}?idea_collection_id=${collectionId}`),
   ),
-  programs: cache(() => serverFetch<Program[]>(endpoints.programs)),
+  programs: cache((query = "") => serverFetch<Program[]>(`${endpoints.programs}${query}`)),
   program: cache((id: number) => serverFetch<Program>(`${endpoints.programs}/${id}`)),
-  posts: cache(() => serverFetch<Post[]>(endpoints.posts)),
+  posts: cache((query = "") => serverFetch<Post[]>(`${endpoints.posts}${query}`)),
   post: cache((id: number) => serverFetch<Post>(`${endpoints.posts}/${id}`)),
-  logs: cache(() => serverFetch<LogEntry[]>(endpoints.logs)),
+  logs: cache((query = "") => serverFetch<LogEntry[]>(`${endpoints.logs}${query}`)),
   programLogs: cache((programId: number, limit = 20) =>
     serverFetch<LogEntry[]>(`${endpoints.logs}?program_id=${programId}&limit=${limit}`),
   ),
-  templates: cache(() => serverFetch<Template[]>(endpoints.templates.list)),
+  templates: cache((query = "") => serverFetch<Template[]>(`${endpoints.templates.list}${query}`)),
   baseTemplates: cache(() => serverFetch<TemplateBase[]>(endpoints.templates.bases)),
   baseDetails: cache((key: string) => serverFetch<TemplateBaseDetail>(`${endpoints.templates.bases}/${key}`)),
   baseHtml: cache((key: string) => serverFetchText(endpoints.templates.baseHtml(key))),
