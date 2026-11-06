@@ -14,11 +14,11 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import {LogLevel, LogLevelValues} from "@/lib/api/types";
-import {serverApi, settle} from "@/lib/api/server";
+import {LogLevel, LogLevelValues, type Program} from "@/lib/api/types";
+import {ALL_ITEMS, serverApi, settle} from "@/lib/api/server";
 import {formatDateTime} from "@/lib/format";
 import {type ListFilter, ListFilters, ListFiltersFallback, ListNoResults} from "@/components/data-list";
-import {listQuery, paginate, parseListParams} from "@/lib/list-params";
+import {isId, listQuery, paginate, parseListParams} from "@/lib/list-params";
 
 
 export const metadata: Metadata = {title: "Logs"};
@@ -39,6 +39,20 @@ const FILTERS = [
     }
 ] as const satisfies readonly ListFilter[];
 
+function programFilter(programs: Program[]): ListFilter {
+    return {
+        type: "select",
+        param: "program",
+        label: "Program",
+        allLabel: "All programs",
+        options: programs.map((p) => ({ value: String(p.id), label: p.name })),
+    };
+}
+
+async function LogsFilters() {
+    const programs = await settle(serverApi.programs(ALL_ITEMS));
+    return <ListFilters filters={[...FILTERS, programFilter(programs.data ?? [])]} />;
+}
 
 export default function LogsPage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
 
@@ -51,12 +65,12 @@ export default function LogsPage({ searchParams }: { searchParams: Record<string
             />
 
             <Suspense fallback={<ListFiltersFallback filters={FILTERS}/>}>
-                <ListFilters filters={FILTERS}/>
+                <LogsFilters/>
             </Suspense>
 
             <Suspense fallback={<Skeleton className="h-64 w-full"/>}>
                 {Promise.all([searchParams]).then(([sp]) => (
-                    <LogsTable params={parseListParams(sp, {filters: ["status"]})}/>
+                    <LogsTable params={parseListParams(sp, {filters: ["status", "program"], validate: {status: LogLevelValues.map((o) => o), program: isId}})}/>
                 ))}
 
             </Suspense>
@@ -65,8 +79,8 @@ export default function LogsPage({ searchParams }: { searchParams: Record<string
     );
 }
 
-async function LogsTable({params}: { params: ReturnType<typeof parseListParams<"status">>; }) {
-    const {data, error} = await settle(serverApi.logs(listQuery(params)));
+async function LogsTable({params}: { params: ReturnType<typeof parseListParams<"status" | "program">>; }) {
+    const {data, error} = await settle(serverApi.logs(listQuery(params, { rename: { program: "program_id" } })));
     if (error) return <ApiNotice error={error}/>;
 
     if (data.length === 0) {

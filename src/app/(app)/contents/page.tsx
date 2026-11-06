@@ -29,8 +29,8 @@ const STATUS_OPTIONS = Object.entries(contentStatusLabel).map(([value, label]) =
 
 /** Filters that don't depend on data (the program one is added once programs load). */
 const BASE_FILTERS = [
-  { type: "tabs", param: "status", label: "Status", options: STATUS_OPTIONS },
   { type: "search", param: "q", label: "Search contents", placeholder: "Search caption or idea…" },
+  { type: "select", param: "status", label: "Status", options: STATUS_OPTIONS },
 ] as const satisfies readonly ListFilter[];
 
 function programFilter(programs: Program[]): ListFilter {

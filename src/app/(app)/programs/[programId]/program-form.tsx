@@ -50,7 +50,7 @@ function initialState(program: Program): FormState {
     template: program.template_id === null ? NO_TEMPLATE : String(program.template_id),
     account: String(program.instagram_account_id),
     mode: program.mode,
-    active: program.is_active,
+    active: program.status === "active",
   };
 }
 
@@ -77,6 +77,7 @@ export function ProgramForm({
 
   const set = (patch: Partial<FormState>) => setForm((f) => ({ ...f, ...patch }));
   const saved = initialState(program);
+  const archived = program.status === "archived";
   const cron = scheduleToCron(toSchedule(schedule));
   const scheduleError = validateSchedule(schedule);
 
@@ -91,7 +92,8 @@ export function ProgramForm({
   }
   if (form.account !== saved.account) changes.instagram_account_id = Number(form.account);
   if (form.mode !== saved.mode) changes.mode = form.mode;
-  if (form.active !== saved.active) changes.is_active = form.active;
+  // Switching an archived program off again is no change: it stays archived.
+  if (form.active !== saved.active) changes.status = form.active ? "active" : "inactive";
   if (savedCron === null ? scheduleEdited : cron !== savedCron) changes.cron_expression = cron;
   const dirty = Object.keys(changes).length > 0;
   const activating = form.active && !saved.active;
@@ -133,9 +135,15 @@ export function ProgramForm({
     startTransition(async () => {
       try {
         await api.updateProgram(program.id, changes);
-        toast.success(
-          changes.is_active ? "Program activated: it now runs on its schedule" : "Program updated",
-        );
+        if (changes.status === "active" && archived) {
+          toast.warning("Program activated: it is no longer archived", {
+            description: "It now runs on its schedule and is listed among the active programs.",
+          });
+        } else {
+          toast.success(
+            changes.status === "active" ? "Program activated: it now runs on its schedule" : "Program updated",
+          );
+        }
         setScheduleEdited(false);
         router.refresh();
       } catch (e) {
@@ -165,14 +173,18 @@ export function ProgramForm({
           <Label htmlFor="active" className="grid cursor-pointer gap-1">
             <span className="flex items-center gap-2 text-base font-semibold">
               <span
-                className={`size-2 rounded-full ${form.active ? "bg-signal" : "bg-muted-foreground/40"}`}
+                className={`size-2 rounded-full ${
+                  form.active ? "bg-signal" : archived ? "bg-chart-4" : "bg-muted-foreground/40"
+                }`}
               />
-              {form.active ? "Active" : "Inactive"}
+              {form.active ? "Active" : archived ? "Archived" : "Inactive"}
             </span>
             <span className="text-sm leading-snug font-normal text-muted-foreground">
               {form.active
                 ? "The program runs automatically on its schedule."
-                : "The program is paused and never runs."}
+                : archived
+                  ? "The program is archived and never runs. Activating it takes it out of the archive."
+                  : "The program is paused and never runs."}
             </span>
           </Label>
           <Switch
@@ -187,7 +199,7 @@ export function ProgramForm({
           <p role="alert" className="rounded-md border border-chart-4/40 bg-chart-4/10 px-3 py-2 text-sm">
             Once saved, this program will run automatically at every time set by its schedule
             {form.mode === "publish" ? " and post the content to Instagram" : ""}, from its next
-            scheduled run onward.
+            scheduled run onward.{archived ? " It will no longer be archived." : ""}
           </p>
         ) : null}
         {activeError ? (

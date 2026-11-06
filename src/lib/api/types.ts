@@ -34,6 +34,9 @@ export type ContentType = "carousel" | "reel" | "story";
 /** preview = generate and store without publishing; publish = generate and post. */
 export type ProgramMode = "preview" | "publish";
 
+/** active = runs on its schedule; inactive = paused; archived = paused and set aside. */
+export type ProgramStatus = "active" | "inactive" | "archived";
+
 export type Program = {
   id: Id;
   name: string;
@@ -50,7 +53,7 @@ export type Program = {
   /** IANA timezone the cron expression is evaluated in. */
   timezone: string;
   mode: ProgramMode;
-  is_active: boolean;
+  status: ProgramStatus;
   /** Managed by the scheduler. */
   last_run: ISODateString | null;
   next_run: ISODateString | null;
@@ -202,10 +205,10 @@ export type CreateProgramInput = {
   mode: ProgramMode;
   cron_expression: string;
   timezone: string;
-  is_active: boolean;
+  status: ProgramStatus;
   instagram_account_id: Id | null;
   idea_collection_id: Id | null;
-  /** Template the content is rendered with. Required when is_active is true. */
+  /** Template the content is rendered with. Required when status is "active". */
   template_id: Id | null;
   /*content_type: ContentType;*/
   /** Instagram account the program publishes to. Required when mode is "publish". */

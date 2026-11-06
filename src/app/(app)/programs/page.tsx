@@ -17,10 +17,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ALL_ITEMS, serverApi, settle } from "@/lib/api/server";
-import type { IdeaCollection } from "@/lib/api/types";
+import type { IdeaCollection, ProgramStatus } from "@/lib/api/types";
 import { cronToSchedule } from "@/lib/cron";
 import { formatDateTime, modeLabel } from "@/lib/format";
 import { hasActiveFilters, isId, listQuery, paginate, parseListParams } from "@/lib/list-params";
+import { isRunning } from "@/lib/program";
 import { describeSchedule } from "@/lib/schedule";
 import { NewProgramDialog } from "./new-program-dialog";
 
@@ -33,7 +34,8 @@ type SearchParams = Record<string, string | string[] | undefined>;
 const STATUS_OPTIONS = [
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
-] as const;
+  { value: "archived", label: "Archived" },
+] as const satisfies readonly { value: ProgramStatus; label: string }[];
 
 const MODE_OPTIONS = Object.entries(modeLabel).map(([value, label]) => ({ value, label }));
 
@@ -119,11 +121,8 @@ async function ProgramsList({ searchParams }: { searchParams: SearchParams }) {
       collection: isId,
     },
   });
-  const { status } = params.filters;
   const query = listQuery(params, {
     rename: { q: "search", collection: "idea_collection_id" },
-    omit: ["status"],
-    extra: { is_active: status === undefined ? undefined : status === "active" },
   });
 
   const [programs, collections, accounts] = await Promise.all([
@@ -183,7 +182,7 @@ async function ProgramsList({ searchParams }: { searchParams: SearchParams }) {
       </SectionTitle>
       <ul className="divide-y">
         {page.items.map((p) => {
-          const active = p.is_active && p.idea_collection_id !== null;
+          const active = isRunning(p);
           return (
             <li key={p.id}>
               <Link
@@ -192,10 +191,15 @@ async function ProgramsList({ searchParams }: { searchParams: SearchParams }) {
               >
                 <div className="min-w-0">
                   <p className="flex items-center gap-2 text-[15px] font-medium">
-                    <span
-                      className={`size-1.5 shrink-0 rounded-full ${active ? "bg-signal" : "bg-muted-foreground/40"}`}
-                      aria-label={active ? "Active" : "Inactive"}
-                    />
+                    {p.status === "archived" ? (
+                      <Badge className="bg-chart-4 text-neutral-950">Archived</Badge>
+                    ) : active ? (
+                      <Badge className="bg-signal text-signal-foreground">Active</Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-muted-foreground">
+                        Inactive
+                      </Badge>
+                    )}
                     <span className="group-hover:underline group-hover:underline-offset-4">{p.name}</span>
                   </p>
                   <p className="mt-1 truncate text-sm text-muted-foreground">

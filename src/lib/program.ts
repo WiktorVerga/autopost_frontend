@@ -1,3 +1,10 @@
+import type { Program } from "@/lib/api/types";
+
+/** True when the program actually runs on its schedule. */
+export function isRunning(program: Pick<Program, "status" | "idea_collection_id">): boolean {
+  return program.status === "active" && program.idea_collection_id !== null;
+}
+
 /**
  * Why a program cannot be switched to active, or null when it can.
  * A program needs a collection to take ideas from and a template to render them with:

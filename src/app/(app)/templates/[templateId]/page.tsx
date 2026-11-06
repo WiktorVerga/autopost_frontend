@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { serverApi, settle } from "@/lib/api/server";
 import type { TemplateFormat } from "@/lib/api/types";
 import { formatDateTime } from "@/lib/format";
+import { isRunning } from "@/lib/program";
 import { DeleteTemplateButton } from "./delete-template-button";
 
 export const metadata: Metadata = { title: "Template" };
@@ -140,7 +141,7 @@ async function TemplatePrograms({ templateId }: { templateId: number }) {
       ) : (
         <ul className="divide-y">
           {usedBy.map((p) => {
-            const active = p.is_active && p.idea_collection_id !== null;
+            const active = isRunning(p);
             return (
               <li key={p.id}>
                 <Link

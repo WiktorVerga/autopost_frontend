@@ -8,6 +8,7 @@ import { PageHeader, SectionTitle } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { serverApi, settle } from "@/lib/api/server";
 import { formatDateTime } from "@/lib/format";
+import { isRunning } from "@/lib/program";
 
 export const metadata: Metadata = { title: "Overview" };
 
@@ -54,7 +55,7 @@ async function Stats() {
 
   const usedIdeasIds = new Set(posts.data?.map((p) => p.idea_id));
   const ideasLeftToGenerate = ideas.data?.filter((i) => !usedIdeasIds.has(i.id));
-  const activePrograms = programs.data?.filter((p) => p.is_active && p.idea_collection_id !== null);
+  const activePrograms = programs.data?.filter(isRunning);
   const nextRun = activePrograms
     ?.map((p) => p.next_run)
     .filter((d): d is string => Boolean(d))

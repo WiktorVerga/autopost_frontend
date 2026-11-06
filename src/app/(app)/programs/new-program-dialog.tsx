@@ -120,7 +120,7 @@ export function NewProgramDialog({
           cron_expression: scheduleToCron(toSchedule(schedule)),
           mode: publish ? "publish" : "preview",
           timezone,
-          is_active: publish,
+          status: publish ? "active" : "inactive",
         });
         toast.success("Program created");
         setOpen(false);
