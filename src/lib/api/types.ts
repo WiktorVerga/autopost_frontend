@@ -4,6 +4,7 @@
  * Draft based on the agreed data model — align field names with the backend
  * Pydantic schemas (or generate them from its OpenAPI spec) once they are final.
  */
+import {JsonObject} from "@/lib/template/schema";
 
 export type Id = number;
 export type ISODateString = string;
@@ -33,6 +34,9 @@ export type ContentType = "carousel" | "reel" | "story";
 /** preview = generate and store without publishing; publish = generate and post. */
 export type ProgramMode = "preview" | "publish";
 
+/** active = runs on its schedule; inactive = paused; archived = paused and set aside. */
+export type ProgramStatus = "active" | "inactive" | "archived";
+
 export type Program = {
   id: Id;
   name: string;
@@ -40,6 +44,8 @@ export type Program = {
   idea_collection_id: Id | null;
   /** Not returned by the backend yet: every program produces carousels. */
   content_type?: ContentType;
+  /** Template the program renders its content with. Required to activate the program. */
+  template_id: Id | null;
   /** Instagram account the program publishes to. */
   instagram_account_id: Id;
   /** Standard 5-field cron expression; parse it with `cronToSchedule` (lib/cron.ts). */
@@ -47,7 +53,7 @@ export type Program = {
   /** IANA timezone the cron expression is evaluated in. */
   timezone: string;
   mode: ProgramMode;
-  is_active: boolean;
+  status: ProgramStatus;
   /** Managed by the scheduler. */
   last_run: ISODateString | null;
   next_run: ISODateString | null;
@@ -79,7 +85,84 @@ export type Content = {
   url: string;
 };
 
+export type TemplateFormat = "carousel" | "reel";
+
+export type TemplateVariable = {
+  name: string;
+  type: string;
+  example: unknown;
+};
+
+export type Template = {
+  id: Id;
+  name: string;
+  description: string | null;
+  format: TemplateFormat;
+  width: number;
+  height: number;
+  version: number;
+  is_active: boolean;
+  variables: TemplateVariable[];
+  /**
+   * Rendered preview of the first slide. Not returned by the backend yet:
+   * until it is, the grid shows a placeholder.
+   */
+  preview_image?: string | null;
+  created_at: ISODateString;
+  updated_at: ISODateString;
+};
+
+export type TemplateBase = {
+  /** Value for `definition_json.base_template`. */
+  key: string;
+  /** Current version: templates with a lower `base_version` are outdated. */
+  version: number;
+};
+
+export type TemplateBaseDetail = TemplateBase & {
+  /** Preview image in base64. */
+  preview_image: string;
+  /** JSON Schema of the definition, with defaults. */
+  json_schema: Record<string, unknown>;
+};
+
+/**
+ * Definition of a template: the JSON validated by its base's schema.
+ * Only `schema_version` and `base_template` are required: every other value
+ * falls back to the defaults declared in the schema.
+ */
+export type TemplateDefinition = {
+  schema_version: number;
+  base_template: string;
+  [key: string]: unknown;
+};
+
+/** Detail view: includes the Jinja2 source, too heavy for the list. */
+export type TemplateDetail = Template & {
+  html_content: string;
+  /** Key of the base the template was created from. */
+  base_template: string;
+  base_version: number;
+  definition_json: TemplateDefinition;
+  jinja_content: string;
+  preview_image: string;
+};
+
+export type CreateTemplateInput = {
+  name: string;
+  description: string | null;
+  base_template: string;
+  definition_json: JsonObject;
+};
+
+export type UpdateTemplateInput = {
+  name: string;
+  description: string | null;
+  definition_json: JsonObject;
+};
+
 export type LogLevel = "info" | "warning" | "error";
+export const LogLevelValues = ["info", "warning", "error"] as const;
 
 export type LogEntry = {
   id: Id;
@@ -122,9 +205,11 @@ export type CreateProgramInput = {
   mode: ProgramMode;
   cron_expression: string;
   timezone: string;
-  is_active: boolean;
+  status: ProgramStatus;
   instagram_account_id: Id | null;
   idea_collection_id: Id | null;
+  /** Template the content is rendered with. Required when status is "active". */
+  template_id: Id | null;
   /*content_type: ContentType;*/
   /** Instagram account the program publishes to. Required when mode is "publish". */
 

@@ -5,19 +5,19 @@
  */
 import { BROWSER_API_PREFIX, endpoints } from "./endpoints";
 import { toApiError } from "./errors";
-import type {
+import {
   CreateCollectionInput,
   CreateIdeaInput,
-  CreateProgramInput,
+  CreateProgramInput, CreateTemplateInput,
   Id,
   Idea,
   IdeaCollection,
   InstagramOAuthLogin,
   Post,
-  Program,
+  Program, Template,
   UpdateCollectionInput,
   UpdateIdeaInput,
-  UpdateProgramInput,
+  UpdateProgramInput, UpdateTemplateInput,
 } from "./types";
 
 type Options = Omit<RequestInit, "body"> & { body?: unknown };
@@ -67,4 +67,10 @@ export const api = {
       apiFetch<InstagramOAuthLogin>(endpoints.instagram.connect),
   disconnectInstagramAccount: (id: Id) =>
       apiFetch<void>(`${endpoints.instagram.disconnect}/${id}`, {method: "DELETE"}),
+  createTemplate: ( input: CreateTemplateInput) =>
+      apiFetch<Template>(endpoints.templates.list, {method: "POST", body: input}),
+  updateTemplate: (id: Id, input: UpdateTemplateInput) =>
+      apiFetch<Template>(`${endpoints.templates.list}/${id}`, {method: "PATCH", body: input}),
+  deleteTemplate: (id: Id) =>
+      apiFetch<void>(`${endpoints.templates.list}/${id}`, {method: "DELETE"}),
 };

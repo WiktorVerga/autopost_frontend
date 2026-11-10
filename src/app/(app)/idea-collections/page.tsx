@@ -4,15 +4,29 @@ import { Suspense } from "react";
 import { ArrowRightIcon, LightbulbIcon } from "lucide-react";
 
 import { ApiNotice } from "@/components/api-notice";
+import {
+  ListFilters,
+  ListFiltersFallback,
+  ListNoResults,
+  ListPagination,
+  type ListFilter,
+} from "@/components/data-list";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader, SectionTitle } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { serverApi, settle } from "@/lib/api/server";
+import { hasActiveFilters, listQuery, paginate, parseListParams } from "@/lib/list-params";
 import { NewCollectionDialog } from "./new-collection-dialog";
 
 export const metadata: Metadata = { title: "Idea collections" };
 
-export default function IdeaCollectionsPage() {
+const PATH = "/idea-collections";
+
+const FILTERS = [
+  { type: "search", param: "q", label: "Search collections", placeholder: "Search collections…", maxLength: 100 },
+] as const satisfies readonly ListFilter[];
+
+export default function IdeaCollectionsPage({ searchParams }: PageProps<"/idea-collections">) {
   return (
     <div className="space-y-10">
       <PageHeader
@@ -22,22 +36,53 @@ export default function IdeaCollectionsPage() {
         actions={<NewCollectionDialog />}
       />
 
-      <Suspense fallback={<CollectionsSkeleton />}>
-        <CollectionsList />
-      </Suspense>
+      <div className="space-y-6">
+        <Suspense fallback={<ListFiltersFallback filters={FILTERS} />}>
+          <ListFilters filters={FILTERS} />
+        </Suspense>
+
+        <Suspense fallback={<CollectionsSkeleton />}>
+          {searchParams.then((sp) => (
+            <CollectionsList searchParams={sp} />
+          ))}
+        </Suspense>
+      </div>
     </div>
   );
 }
 
-async function CollectionsList() {
+async function CollectionsList({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
+  const params = parseListParams(searchParams, { filters: FILTERS.map((f) => f.param) });
+
   const [collections, ideas] = await Promise.all([
-    settle(serverApi.collections()),
+    settle(serverApi.collections(listQuery(params, { rename: { q: "search" } }))),
     settle(serverApi.ideas()),
   ]);
 
   if (collections.error) return <ApiNotice error={collections.error} />;
 
-  if (collections.data.length === 0) {
+  const page = paginate(collections.data, params);
+
+  if (page.items.length === 0) {
+    if (hasActiveFilters(params)) {
+      return (
+        <ListNoResults
+          resetHref={PATH}
+          title="No matching collections"
+          description={`No collection name contains “${params.filters.q}”.`}
+        />
+      );
+    }
+    if (page.page > 1) {
+      return (
+        <ListNoResults
+          resetHref={PATH}
+          title="This page is empty"
+          description="There are no collections this far. Go back to the first page."
+          resetLabel="First page"
+        />
+      );
+    }
     return (
       <EmptyState
         icon={LightbulbIcon}
@@ -53,12 +98,16 @@ async function CollectionsList() {
   return (
     <section className="space-y-1">
       <SectionTitle
-        aside={<span className="font-mono text-xs text-muted-foreground">{collections.data.length}</span>}
+        aside={
+          <span className="font-mono text-xs text-muted-foreground">
+            {page.hasPrev || page.hasNext ? `${page.from}–${page.to}` : page.items.length}
+          </span>
+        }
       >
-        Collections
+        {params.filters.q ? `Collections matching “${params.filters.q}”` : "Collections"}
       </SectionTitle>
       <ul className="divide-y">
-        {collections.data.map((collection) => {
+        {page.items.map((collection) => {
           const count = ideaCount(collection.id);
           return (
             <li key={collection.id}>
@@ -78,6 +127,7 @@ async function CollectionsList() {
           );
         })}
       </ul>
+      <ListPagination pagination={page} />
     </section>
   );
 }

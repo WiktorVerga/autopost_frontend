@@ -12,8 +12,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { LogLevel } from "@/lib/api/types";
 import { serverApi, settle } from "@/lib/api/server";
 import { formatDateTime, modeLabel } from "@/lib/format";
+import { isRunning } from "@/lib/program";
 import { DeleteProgramButton } from "./delete-program-button";
 import { ProgramForm } from "./program-form";
+import { UnarchiveProgramButton } from "./unarchive-program-button";
 
 export const metadata: Metadata = { title: "Program" };
 
@@ -47,9 +49,10 @@ async function ProgramDetail({ programId }: { programId: string }) {
   const id = Number(programId);
   if (!Number.isInteger(id) || id <= 0) notFound();
 
-  const [program, collections, accounts] = await Promise.all([
+  const [program, collections, templates, accounts] = await Promise.all([
     settle(serverApi.program(id)),
     settle(serverApi.collections()),
+    settle(serverApi.templates()),
     settle(serverApi.instagramAccounts()),
   ]);
 
@@ -57,7 +60,8 @@ async function ProgramDetail({ programId }: { programId: string }) {
   if (program.error) return <ApiNotice error={program.error} />;
 
   const p = program.data;
-  const active = p.is_active && p.idea_collection_id !== null;
+  const active = isRunning(p);
+  const archived = p.status === "archived";
 
   return (
     <div className="space-y-12">
@@ -65,16 +69,20 @@ async function ProgramDetail({ programId }: { programId: string }) {
         eyebrow="Program"
         title={p.name}
         description="Change how this program runs. Edits apply from its next run."
-        actions={<DeleteProgramButton program={p} />}
+        actions={
+          archived ? <UnarchiveProgramButton program={p} /> : <DeleteProgramButton program={p} />
+        }
       />
 
       <dl className="grid grid-cols-2 gap-6 border-b pb-8 md:grid-cols-4">
         <Fact label="Status">
           <span className="flex items-center gap-2">
             <span
-              className={`size-1.5 rounded-full ${active ? "bg-signal" : "bg-muted-foreground/40"}`}
+              className={`size-1.5 rounded-full ${
+                archived ? "bg-chart-4" : active ? "bg-signal" : "bg-muted-foreground/40"
+              }`}
             />
-            {active ? "Active" : "Inactive"}
+            {archived ? "Archived" : active ? "Active" : "Inactive"}
           </span>
         </Fact>
         <Fact label="Mode">
@@ -101,6 +109,7 @@ async function ProgramDetail({ programId }: { programId: string }) {
           key={JSON.stringify(p)}
           program={p}
           collections={collections.data ?? []}
+          templates={templates.data ?? []}
           instagramAccounts={accounts.data ?? []}
         />
       </section>

@@ -28,13 +28,15 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { api } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
-import {ContentType, Id, IdeaCollection, InstagramAccount, ProgramMode} from "@/lib/api/types";
+import type { ContentType, IdeaCollection, InstagramAccount, Template } from "@/lib/api/types";
 import { contentTypeLabel } from "@/lib/format";
+import { activationError } from "@/lib/program";
 import { scheduleToCron } from "@/lib/cron";
 import { defaultScheduleDraft, toSchedule, validateSchedule } from "@/lib/schedule";
 import { SchedulePicker } from "./schedule-picker";
 
 const NO_COLLECTION = "none";
+const NO_TEMPLATE = "none";
 
 // Format choice is temporarily disabled: every program produces carousels.
 // Set to true to bring the selector back.
@@ -43,9 +45,11 @@ const DEFAULT_CONTENT_TYPE: ContentType = "carousel";
 
 export function NewProgramDialog({
   collections,
+  templates,
   instagramAccounts,
 }: {
   collections: IdeaCollection[];
+  templates: Template[];
   instagramAccounts: InstagramAccount[];
 }) {
   const accounts = instagramAccounts;
@@ -57,11 +61,33 @@ export function NewProgramDialog({
   const [publish, setPublish] = useState(false);
   const [schedule, setSchedule] = useState(defaultScheduleDraft);
   const [accountId, setAccountId] = useState(defaultAccount);
+  const [collection, setCollection] = useState(NO_COLLECTION);
+  const [templateId, setTemplateId] = useState(NO_TEMPLATE);
   const [pending, startTransition] = useTransition();
+
+  // Publishing creates the program active: it needs a collection and a template.
+  const currentActivationError = () =>
+    activationError(collection !== NO_COLLECTION, templateId !== NO_TEMPLATE);
+
+  function onPublishChange(on: boolean) {
+    const error = on ? currentActivationError() : null;
+    if (error) {
+      toast.error("Publishing needs an active program", { description: error });
+      return;
+    }
+    setPublish(on);
+  }
+
+  function reset() {
+    setPublish(false);
+    setSchedule(defaultScheduleDraft);
+    setAccountId(defaultAccount);
+    setCollection(NO_COLLECTION);
+    setTemplateId(NO_TEMPLATE);
+  }
 
   function onSubmit(formData: FormData) {
     const name = String(formData.get("name") ?? "").trim();
-    const collection = String(formData.get("collection_id") ?? NO_COLLECTION);
     const contentType = CONTENT_TYPE_SELECTABLE
       ? (String(formData.get("content_type") ?? DEFAULT_CONTENT_TYPE) as ContentType)
       : DEFAULT_CONTENT_TYPE;
@@ -75,22 +101,30 @@ export function NewProgramDialog({
       toast.error("Choose the Instagram account to publish to.");
       return;
     }
+    // The collection or template can be cleared after publishing was turned on.
+    const activeError = publish ? currentActivationError() : null;
+    if (activeError) {
+      toast.error("Publishing needs an active program", {
+        description: `${activeError} Otherwise turn publishing off.`,
+      });
+      return;
+    }
 
     startTransition(async () => {
       try {
         await api.createProgram({
           name,
           idea_collection_id: collection === NO_COLLECTION ? null : Number(collection),
+          template_id: templateId === NO_TEMPLATE ? null : Number(templateId),
           instagram_account_id: accountId ? Number(accountId) : null,
           cron_expression: scheduleToCron(toSchedule(schedule)),
           mode: publish ? "publish" : "preview",
           timezone,
-          is_active: publish,
+          status: publish ? "active" : "inactive",
         });
         toast.success("Program created");
         setOpen(false);
-        setSchedule(defaultScheduleDraft);
-        setAccountId(defaultAccount);
+        reset();
         router.refresh();
       } catch (e) {
         toast.error(e instanceof ApiError ? e.message : "Could not create the program");
@@ -123,7 +157,7 @@ export function NewProgramDialog({
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="collection_id">Collection</Label>
-              <Select name="collection_id" defaultValue={NO_COLLECTION}>
+              <Select value={collection} onValueChange={setCollection}>
                 <SelectTrigger id="collection_id" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -139,6 +173,32 @@ export function NewProgramDialog({
             </div>
 
             <div className="grid gap-2">
+              <Label htmlFor="template_id">Template</Label>
+              <Select value={templateId} onValueChange={setTemplateId}>
+                <SelectTrigger id="template_id" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_TEMPLATE}>None (inactive)</SelectItem>
+                  {templates.map((t) => (
+                    <SelectItem key={t.id} value={String(t.id)}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {templates.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No templates yet.{" "}
+                  <Link href="/templates" className="text-foreground underline underline-offset-4">
+                    Create one
+                  </Link>
+                  .
+                </p>
+              ) : null}
+            </div>
+
+            <div className="grid gap-2 sm:col-span-2">
               <Label htmlFor="content_type">Format</Label>
               <Select
                 name="content_type"
@@ -174,7 +234,7 @@ export function NewProgramDialog({
               <Switch
                 id="publish"
                 checked={publish}
-                onCheckedChange={setPublish}
+                onCheckedChange={onPublishChange}
                 disabled={accounts.length === 0}
               />
             </div>

@@ -13,18 +13,19 @@ import { endpoints } from "./endpoints";
 import { ApiError, toApiError } from "./errors";
 import {
   Post,
-  Content,
   Idea,
   IdeaCollection,
   InstagramAccount,
   LogEntry,
   Program,
-  User, ContentPost,
+  User,
+  Template,
+  TemplateDetail, TemplateBase, TemplateBaseDetail, Id,
 } from "./types";
 
 const API_URL = process.env.API_URL ?? "https://localhost:8000";
 
-export async function serverFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function rawFetch(path: string, init: RequestInit, accept: string): Promise<Response> {
   const cookieHeader = (await cookies()).toString();
 
   let res: Response;
@@ -32,7 +33,7 @@ export async function serverFetch<T>(path: string, init: RequestInit = {}): Prom
     res = await fetch(`${API_URL}${path}`, {
       ...init,
       headers: {
-        Accept: "application/json",
+        Accept: accept,
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
         ...init.headers,
       },
@@ -43,29 +44,57 @@ export async function serverFetch<T>(path: string, init: RequestInit = {}): Prom
   }
 
   if (!res.ok) throw await toApiError(res);
+  return res;
+}
+
+export async function serverFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await rawFetch(path, init, "application/json");
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }
 
+/** Same as `serverFetch`, for endpoints that answer with plain text or HTML. */
+export async function serverFetchText(path: string, init: RequestInit = {}): Promise<string> {
+  const res = await rawFetch(path, init, "text/html, text/plain;q=0.9, */*;q=0.8");
+  return res.text();
+}
+
+/**
+ * Query for lookups that need the whole list (filter options, id → name maps):
+ * the backend returns 100 items by default and at most 500.
+ */
+export const ALL_ITEMS = "?limit=500";
+
 // `cache` dedupes identical calls within the same request.
+// List endpoints take an optional query string (see `listQuery` in `@/lib/list-params`).
 export const serverApi = {
   me: cache(() => serverFetch<User>(endpoints.auth.me)),
-  collections: cache(() => serverFetch<IdeaCollection[]>(endpoints.collections)),
+  /** `query`: optional query string (e.g. from `listQuery`) for search and pagination. */
+  collections: cache((query = "") =>
+    serverFetch<IdeaCollection[]>(`${endpoints.collections}${query}`),
+  ),
   collection: cache((id: number) =>
     serverFetch<IdeaCollection>(`${endpoints.collections}/${id}`),
   ),
-  ideas: cache(() => serverFetch<Idea[]>(endpoints.ideas)),
+  ideas: cache((query = "") => serverFetch<Idea[]>(`${endpoints.ideas}${query}`)),
   idea: cache((id: number) => serverFetch<Idea>(`${endpoints.ideas}/${id}`)),
   collectionIdeas: cache((collectionId: number) =>
     serverFetch<Idea[]>(`${endpoints.ideas}?idea_collection_id=${collectionId}`),
   ),
-  programs: cache(() => serverFetch<Program[]>(endpoints.programs)),
+  programs: cache((query = "") => serverFetch<Program[]>(`${endpoints.programs}${query}`)),
   program: cache((id: number) => serverFetch<Program>(`${endpoints.programs}/${id}`)),
-  posts: cache(() => serverFetch<Post[]>(endpoints.posts)),
+  posts: cache((query = "") => serverFetch<Post[]>(`${endpoints.posts}${query}`)),
   post: cache((id: number) => serverFetch<Post>(`${endpoints.posts}/${id}`)),
-  logs: cache(() => serverFetch<LogEntry[]>(endpoints.logs)),
+  logs: cache((query = "") => serverFetch<LogEntry[]>(`${endpoints.logs}${query}`)),
   programLogs: cache((programId: number, limit = 20) =>
     serverFetch<LogEntry[]>(`${endpoints.logs}?program_id=${programId}&limit=${limit}`),
+  ),
+  templates: cache((query = "") => serverFetch<Template[]>(`${endpoints.templates.list}${query}`)),
+  baseTemplates: cache(() => serverFetch<TemplateBase[]>(endpoints.templates.bases)),
+  baseDetails: cache((key: string) => serverFetch<TemplateBaseDetail>(`${endpoints.templates.bases}/${key}`)),
+  baseHtml: cache((key: string) => serverFetchText(endpoints.templates.baseHtml(key))),
+  template: cache((id: number) =>
+    serverFetch<TemplateDetail>(`${endpoints.templates.list}/${id}`),
   ),
   instagramAccounts: cache(() => serverFetch<InstagramAccount[]>(endpoints.instagram.accounts)),
 };
