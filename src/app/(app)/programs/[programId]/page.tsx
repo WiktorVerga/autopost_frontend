@@ -15,6 +15,7 @@ import { formatDateTime, modeLabel } from "@/lib/format";
 import { isRunning } from "@/lib/program";
 import { DeleteProgramButton } from "./delete-program-button";
 import { ProgramForm } from "./program-form";
+import { RunProgramButton } from "./run-program-button";
 import { UnarchiveProgramButton } from "./unarchive-program-button";
 
 export const metadata: Metadata = { title: "Program" };
@@ -70,7 +71,14 @@ async function ProgramDetail({ programId }: { programId: string }) {
         title={p.name}
         description="Change how this program runs. Edits apply from its next run."
         actions={
-          archived ? <UnarchiveProgramButton program={p} /> : <DeleteProgramButton program={p} />
+          archived ? (
+            <UnarchiveProgramButton program={p} />
+          ) : (
+            <>
+              <RunProgramButton program={p} />
+              <DeleteProgramButton program={p} />
+            </>
+          )
         }
       />
 
