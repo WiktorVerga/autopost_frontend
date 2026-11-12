@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon, TriangleAlertIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { browserUrl, endpoints } from "@/lib/api/endpoints";
+import { BETA_NOTICE } from "@/lib/beta";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -20,6 +21,14 @@ export default function LoginPage() {
           <br />
           <em className="text-signal">Posts out.</em>
         </h1>
+
+        <div className={"bg-yellow-200 p-5 rounded-lg"}>
+          <h2 className={"flex items-center gap-2 text-signal text-2xl leading-[0.9] tracking-tight md:text-4xl font-bold"}>
+            <TriangleAlertIcon className="size-6 shrink-0 md:size-8" aria-hidden />
+            {BETA_NOTICE.title}
+          </h2>
+          <p className={"text-muted"}>{BETA_NOTICE.message}</p>
+        </div>
 
         <ol className="grid gap-3 font-mono text-[11px] uppercase tracking-[0.14em] text-primary-foreground/60 sm:grid-cols-3">
           <li>
