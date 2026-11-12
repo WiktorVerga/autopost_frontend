@@ -60,6 +60,9 @@ export const api = {
       apiFetch<Program>(`${endpoints.programs}/${id}`, {method: "PATCH", body: input}),
   deleteProgram: (id: Id) =>
       apiFetch<void>(`${endpoints.programs}/${id}`, {method: "DELETE"}),
+  /** Runs the pipeline now, outside the schedule, and returns the resulting post. */
+  runProgram: (id: Id) =>
+      apiFetch<Post>(`${endpoints.programs}/${id}/run`, {method: "POST"}),
   getPost: (id: Id) => apiFetch<Post>(`${endpoints.posts}/${id}`),
   publishPost: (id: Id) =>
       apiFetch<Post>(`${endpoints.posts}/${id}/publish`, {method: "POST"}),
