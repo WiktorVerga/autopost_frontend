@@ -19,7 +19,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ALL_ITEMS, serverApi, settle } from "@/lib/api/server";
 import type { IdeaCollection, ProgramStatus } from "@/lib/api/types";
 import { cronToSchedule } from "@/lib/cron";
-import { formatDateTime, modeLabel } from "@/lib/format";
+import { LocalDateTime } from "@/components/local-date-time";
+import { modeLabel } from "@/lib/format";
 import { hasActiveFilters, isId, listQuery, paginate, parseListParams } from "@/lib/list-params";
 import { isRunning } from "@/lib/program";
 import { describeSchedule } from "@/lib/schedule";
@@ -217,7 +218,7 @@ async function ProgramsList({ searchParams }: { searchParams: SearchParams }) {
                   >
                     {modeLabel[p.mode]}
                   </Badge>
-                  <span title="Next run">{active ? formatDateTime(p.next_run) : "—"}</span>
+                  <span title="Next run">{active ? <LocalDateTime iso={p.next_run} /> : "—"}</span>
                   <ArrowRightIcon className="size-3.5 transition-transform group-hover:translate-x-0.5" />
                 </span>
               </Link>

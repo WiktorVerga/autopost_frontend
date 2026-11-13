@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ArrowRightIcon, TriangleAlertIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -11,10 +12,10 @@ export default function LoginPage() {
   return (
     <div className="grid min-h-svh md:grid-cols-[1.2fr_1fr]">
       <section className="relative flex flex-col justify-between overflow-hidden bg-primary p-8 text-primary-foreground md:p-12">
-        <p className="flex items-baseline gap-1.5">
+        <Link href="/" className="flex items-baseline gap-1.5 self-start" aria-label="Autopost home">
           <span className="font-serif text-2xl">Autopost</span>
           <span className="size-2 rounded-full bg-signal" aria-hidden />
-        </p>
+        </Link>
 
         <h1 className="my-16 font-serif text-6xl leading-[0.9] tracking-tight md:text-8xl">
           Ideas in.

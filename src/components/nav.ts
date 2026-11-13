@@ -17,7 +17,7 @@ export type NavItem = {
 };
 
 export const mainNav: NavItem[] = [
-    {href: "/", label: "Overview", icon: LayoutGridIcon},
+    {href: "/dashboard", label: "Overview", icon: LayoutGridIcon},
     {href: "/idea-collections", label: "Idea collections", icon: LightbulbIcon},
     {href: "/programs", label: "Programs", icon: CalendarClockIcon},
     {href: "/contents", label: "Contents", icon: ImagesIcon},

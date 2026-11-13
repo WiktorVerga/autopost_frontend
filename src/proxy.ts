@@ -8,6 +8,8 @@ import type { NextRequest } from "next/server";
 const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "autopost_session";
 const AUTH_BYPASS = process.env.AUTH_BYPASS === "true";
 
+/** Where the app starts for a signed-in user. "/" is the public landing page. */
+const APP_HOME = "/dashboard";
 const PUBLIC_PATHS = ["/login"];
 
 export function proxy(request: NextRequest) {
@@ -15,16 +17,20 @@ export function proxy(request: NextRequest) {
 
   const { pathname, search } = request.nextUrl;
   const hasSession = request.cookies.has(SESSION_COOKIE);
+
+  // The landing page is open to everyone, signed in or not.
+  if (pathname === "/") return NextResponse.next();
+
   const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
   if (!hasSession && !isPublic) {
     const url = new URL("/login", request.url);
-    if (pathname !== "/") url.searchParams.set("next", `${pathname}${search}`);
+    if (pathname !== APP_HOME) url.searchParams.set("next", `${pathname}${search}`);
     return NextResponse.redirect(url);
   }
 
   if (hasSession && pathname === "/login") {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL(APP_HOME, request.url));
   }
 
   return NextResponse.next();

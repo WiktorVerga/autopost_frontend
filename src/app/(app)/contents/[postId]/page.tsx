@@ -9,7 +9,8 @@ import {PageHeader, SectionTitle} from "@/components/page-header";
 import {Skeleton} from "@/components/ui/skeleton";
 import {serverApi, settle} from "@/lib/api/server";
 import type {ContentStatus} from "@/lib/api/types";
-import {contentStatusLabel, formatDateTime} from "@/lib/format";
+import {contentStatusLabel} from "@/lib/format";
+import {LocalDateTime} from "@/components/local-date-time";
 import {PublishPostButton} from "./publish-post-button";
 
 export const metadata: Metadata = {title: "Post"};
@@ -80,10 +81,10 @@ async function PostDetails({postId}: { postId: string }) {
                     <span className="font-mono text-xs">{slides.length}</span>
                 </Fact>
                 <Fact label="Created">
-                    <span className="font-mono text-xs">{formatDateTime(post.created_at)}</span>
+                    <span className="font-mono text-xs"><LocalDateTime iso={post.created_at} /></span>
                 </Fact>
                 <Fact label="Published">
-                    <span className="font-mono text-xs">{formatDateTime(post.published_at)}</span>
+                    <span className="font-mono text-xs"><LocalDateTime iso={post.published_at} /></span>
                 </Fact>
             </dl>
 

@@ -20,7 +20,7 @@ import {
 import { mainNav, settingsNav, type NavItem } from "./nav";
 
 function isActive(pathname: string, href: string) {
-  return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 function NavList({ items, pathname }: { items: NavItem[]; pathname: string }) {
@@ -65,7 +65,7 @@ export function AppSidebar({ footer }: { footer?: ReactNode }) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="px-3 pt-4 pb-2">
-        <Link href="/" className="flex items-baseline gap-1.5 overflow-hidden">
+        <Link href="/dashboard" className="flex items-baseline gap-1.5 overflow-hidden">
           <span className="font-serif text-2xl leading-none tracking-tight group-data-[collapsible=icon]:hidden">
             Autopost
           </span>
