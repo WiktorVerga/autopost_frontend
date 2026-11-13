@@ -52,7 +52,7 @@ Server Components ────────────────────�
 
 - **Same origin.** The browser only calls `/api/*`; `next.config.ts` rewrites it to the backend, so the session cookie stays first-party and no CORS setup is needed.
 - **Server reads, client writes.** Lists are fetched in Server Components; forms use a small browser client and then call `router.refresh()`.
-- **Route protection.** `src/proxy.ts` (the Next 16 name for `middleware.ts`) redirects to `/login` when the session cookie is missing. It is an optimistic check: the backend validates the session on every request.
+- **Route protection.** `src/proxy.ts` (the Next 16 name for `middleware.ts`) redirects to `/login` when the session cookie is missing. The landing page at `/` is public; the app starts at `/dashboard`. It is an optimistic check: the backend validates the session on every request.
 - **Single source of truth for routes.** Every backend path is declared once in `src/lib/api/endpoints.ts`; response shapes are in `src/lib/api/types.ts`.
 
 | Method | Backend path | Used by |
@@ -107,9 +107,10 @@ For Google sign-in to land the cookie on the frontend origin, register the Googl
 ```
 src/
 ├─ app/
+│  ├─ (landing)/           Public landing page at "/" (GSAP animations)
 │  ├─ (auth)/login/        Sign-in page (public)
 │  ├─ (app)/               Authenticated area with the sidebar
-│  │  ├─ page.tsx          Overview
+│  │  ├─ dashboard/        Overview
 │  │  ├─ idea-collections/ Collections and their ideas
 │  │  ├─ programs/         Programs, schedule picker, program detail
 │  │  ├─ contents/         Generated contents

@@ -7,7 +7,7 @@ import { ApiNotice } from "@/components/api-notice";
 import { PageHeader, SectionTitle } from "@/components/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { serverApi, settle } from "@/lib/api/server";
-import { formatDateTime } from "@/lib/format";
+import { LocalDateTime } from "@/components/local-date-time";
 import { isRunning } from "@/lib/program";
 
 export const metadata: Metadata = { title: "Overview" };
@@ -65,7 +65,7 @@ async function Stats() {
   const stats = [
     { label: "Ideas left to generate", value: ideasLeftToGenerate?.length },
     { label: "Active programs", value: activePrograms?.length },
-    { label: "Next run", value: nextRun ? formatDateTime(nextRun) : undefined, small: true },
+    { label: "Next run", value: nextRun ? <LocalDateTime iso={nextRun} /> : undefined, small: true },
     { label: "Published this Week", value: publishedThisWeek ? publishedThisWeek.length : undefined, small: true },
   ];
 
@@ -110,7 +110,7 @@ async function RecentActivity() {
       {recent.map((log) => (
         <li key={log.id} className="flex flex-col gap-1 py-3 text-sm sm:flex-row sm:items-baseline sm:gap-4">
           <span className="w-44 shrink-0 whitespace-nowrap font-mono text-xs text-muted-foreground">
-            {formatDateTime(log.created_at)}
+            <LocalDateTime iso={log.created_at} />
           </span>
           <span className={`min-w-0 wrap-anywhere ${log.level === "error" ? "text-destructive" : ""}`}>{log.message}</span>
         </li>

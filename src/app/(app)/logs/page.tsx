@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import {LogLevel, LogLevelValues, type Program} from "@/lib/api/types";
 import {ALL_ITEMS, serverApi, settle} from "@/lib/api/server";
-import {formatDateTime} from "@/lib/format";
+import {LocalDateTime} from "@/components/local-date-time";
 import {type ListFilter, ListFilters, ListFiltersFallback, ListNoResults} from "@/components/data-list";
 import {isId, listQuery, paginate, parseListParams} from "@/lib/list-params";
 
@@ -108,7 +108,7 @@ async function LogsTable({params}: { params: ReturnType<typeof parseListParams<"
                 {data.map((log) => (
                     <TableRow key={log.id} className="flex flex-wrap items-baseline py-2 lg:table-row lg:py-0">
                         <TableCell
-                            className="py-0.5 pl-0 font-mono text-xs lg:p-2">{formatDateTime(log.created_at)}</TableCell>
+                            className="py-0.5 pl-0 font-mono text-xs lg:p-2"><LocalDateTime iso={log.created_at} /></TableCell>
                         <TableCell
                             className={`py-0.5 font-mono text-xs uppercase lg:p-2 ${levelStyle[log.level]}`}>{log.level}</TableCell>
                         <TableCell className="py-0.5 font-mono text-xs text-muted-foreground lg:p-2">

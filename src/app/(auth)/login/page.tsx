@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import { ArrowRightIcon } from "lucide-react";
+import Link from "next/link";
+import { ArrowRightIcon, TriangleAlertIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { browserUrl, endpoints } from "@/lib/api/endpoints";
+import { BETA_NOTICE } from "@/lib/beta";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -10,16 +12,24 @@ export default function LoginPage() {
   return (
     <div className="grid min-h-svh md:grid-cols-[1.2fr_1fr]">
       <section className="relative flex flex-col justify-between overflow-hidden bg-primary p-8 text-primary-foreground md:p-12">
-        <p className="flex items-baseline gap-1.5">
+        <Link href="/" className="flex items-baseline gap-1.5 self-start" aria-label="Autopost home">
           <span className="font-serif text-2xl">Autopost</span>
           <span className="size-2 rounded-full bg-signal" aria-hidden />
-        </p>
+        </Link>
 
         <h1 className="my-16 font-serif text-6xl leading-[0.9] tracking-tight md:text-8xl">
           Ideas in.
           <br />
           <em className="text-signal">Posts out.</em>
         </h1>
+
+        <div className={"bg-yellow-200 p-5 rounded-lg"}>
+          <h2 className={"flex items-center gap-2 text-signal text-2xl leading-[0.9] tracking-tight md:text-4xl font-bold"}>
+            <TriangleAlertIcon className="size-6 shrink-0 md:size-8" aria-hidden />
+            {BETA_NOTICE.title}
+          </h2>
+          <p className={"text-muted"}>{BETA_NOTICE.message}</p>
+        </div>
 
         <ol className="grid gap-3 font-mono text-[11px] uppercase tracking-[0.14em] text-primary-foreground/60 sm:grid-cols-3">
           <li>

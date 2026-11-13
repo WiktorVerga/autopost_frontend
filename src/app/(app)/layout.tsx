@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import { AppSidebar } from "@/components/app-sidebar";
+import { BetaBanner } from "@/components/beta-banner";
 import { UserMenu } from "@/components/user-menu";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -23,6 +24,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
         }
       />
       <SidebarInset>
+        <BetaBanner />
         <div className="sticky top-0 z-10 flex h-12 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur md:hidden">
           <SidebarTrigger />
           <Separator orientation="vertical" className="h-4" />

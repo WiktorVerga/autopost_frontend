@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { serverApi, settle } from "@/lib/api/server";
 import type { TemplateFormat } from "@/lib/api/types";
-import { formatDateTime } from "@/lib/format";
+import { LocalDateTime } from "@/components/local-date-time";
 import { isRunning } from "@/lib/program";
 import { DeleteTemplateButton } from "./delete-template-button";
 
@@ -85,7 +85,7 @@ async function TemplateDetails({ templateId }: { templateId: string }) {
           </span>
         </Fact>
         <Fact label="Updated">
-          <span className="font-mono text-xs">{formatDateTime(template.updated_at)}</span>
+          <span className="font-mono text-xs"><LocalDateTime iso={template.updated_at} /></span>
         </Fact>
       </dl>
 

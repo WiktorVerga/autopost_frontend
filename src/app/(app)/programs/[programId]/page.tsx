@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { LogLevel } from "@/lib/api/types";
 import { serverApi, settle } from "@/lib/api/server";
-import { formatDateTime, modeLabel } from "@/lib/format";
+import { LocalDateTime } from "@/components/local-date-time";
+import { modeLabel } from "@/lib/format";
 import { isRunning } from "@/lib/program";
 import { DeleteProgramButton } from "./delete-program-button";
 import { ProgramForm } from "./program-form";
@@ -102,10 +103,10 @@ async function ProgramDetail({ programId }: { programId: string }) {
           </Badge>
         </Fact>
         <Fact label="Last run">
-          <span className="font-mono text-xs">{formatDateTime(p.last_run)}</span>
+          <span className="font-mono text-xs"><LocalDateTime iso={p.last_run} /></span>
         </Fact>
         <Fact label="Next run">
-          <span className="font-mono text-xs">{active ? formatDateTime(p.next_run) : "—"}</span>
+          <span className="font-mono text-xs">{active ? <LocalDateTime iso={p.next_run} /> : "—"}</span>
         </Fact>
       </dl>
 
@@ -167,7 +168,7 @@ async function RecentLogs({ programId }: { programId: number }) {
               className="grid grid-cols-[auto_1fr] items-baseline gap-x-4 gap-y-1 py-3 text-sm sm:grid-cols-[auto_4.5rem_1fr] sm:gap-y-4"
             >
               <span className="font-mono text-xs text-muted-foreground">
-                {formatDateTime(log.created_at)}
+                <LocalDateTime iso={log.created_at} />
               </span>
               <span className={`font-mono text-xs uppercase ${levelStyle[log.level] ?? ""}`}>
                 {log.level}
