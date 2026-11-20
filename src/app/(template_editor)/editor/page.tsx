@@ -8,7 +8,15 @@ import { ApiNotice } from "@/components/api-notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { serverApi, settle } from "@/lib/api/server";
 import type { TemplateDefinition } from "@/lib/api/types";
-import { buildDefaults, deepMerge, parseSchema, type JsonObject, type JsonSchema } from "@/lib/template/schema";
+import {
+  buildDefaults,
+  conformToSchema,
+  deepMerge,
+  parseSchema,
+  type JsonObject,
+  type JsonSchema,
+} from "@/lib/template/schema";
+import { applyDerivedValues } from "@/lib/template/x-ui";
 import { TemplateEditor } from "./template-editor";
 
 export const metadata: Metadata = { title: "Template editor" };
@@ -48,7 +56,7 @@ async function EditorLoader({ base, templateId }: { base?: string; templateId?: 
       if (error.status === 404) notFound();
       return <EditorNotice><ApiNotice error={error} /></EditorNotice>;
     }
-    baseKey = template.base_template;
+    baseKey = template.type;
     name = template.name;
     description = template.description;
     updatedAt = template.updated_at;
@@ -82,8 +90,15 @@ async function EditorLoader({ base, templateId }: { base?: string; templateId?: 
     );
   }
 
-  // Defaults of the base, overridden by the template's own definition.
-  const initialValues = deepMerge(buildDefaults(schema, schema), definition ?? {}) as JsonObject;
+  // Defaults of the schema and of the post type (defaults.json), overridden by
+  // the template's own definition, then checked against the current schema: a
+  // template saved on an older version of the type may hold values that are no
+  // longer valid or no longer exist. Derived values (font fallbacks…) last.
+  const merged = deepMerge(
+    deepMerge(buildDefaults(schema, schema), detail.data!.defaults ?? {}),
+    definition ?? {},
+  );
+  const initialValues = applyDerivedValues(schema, conformToSchema(schema, schema, merged) as JsonObject);
 
   return (
     <TemplateEditor

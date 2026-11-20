@@ -89,7 +89,7 @@ export default function SaveTemplateDialog(
                 const payload: CreateTemplateInput = {
                     name: trimmedName,
                     description: trimmedDescription? trimmedDescription : null,
-                    base_template: baseKey,
+                    type: baseKey,
                     definition_json: definition
                 }
 

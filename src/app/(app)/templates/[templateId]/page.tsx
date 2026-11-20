@@ -81,7 +81,7 @@ async function TemplateDetails({ templateId }: { templateId: string }) {
         </Fact>
         <Fact label="Base">
           <span className="font-mono text-xs">
-            {template.base_template} · v{template.base_version}
+            {template.type} · v{template.base_version}
           </span>
         </Fact>
         <Fact label="Updated">

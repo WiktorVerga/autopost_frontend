@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { LayoutTemplateIcon } from "lucide-react";
+import {ReactNode, Suspense} from "react";
+import {LayoutTemplateIcon, Loader2Icon, PencilIcon, Trash2Icon} from "lucide-react";
 
 import { ApiNotice } from "@/components/api-notice";
 import {
@@ -18,6 +18,11 @@ import type { TemplateBase } from "@/lib/api/types";
 import { hasActiveFilters, listQuery, paginate, parseListParams } from "@/lib/list-params";
 import { TemplateGrid } from "./template-grid";
 import {BasesGrid} from "@/app/(app)/templates/bases-grid";
+import {Button} from "@/components/ui/button";
+import Link from "next/link";
+import {DeleteTemplateButton} from "@/app/(app)/templates/[templateId]/delete-template-button";
+import CreateNewTemplateButton from "@/app/(app)/templates/new-template-dialog";
+import NewTemplateDialog from "@/app/(app)/templates/new-template-dialog";
 
 export const metadata: Metadata = { title: "Templates" };
 
@@ -38,9 +43,9 @@ function templateFilters(bases: TemplateBase[]): ListFilter[] {
     SEARCH_FILTER,
     {
       type: "select",
-      param: "base",
-      label: "Base",
-      allLabel: "All bases",
+      param: "post-type",
+      label: "Post Type",
+      allLabel: "All Types",
       options: bases.map((b) => ({ value: b.key, label: b.key })),
     },
   ];
@@ -51,8 +56,13 @@ export default function TemplatesPage({ searchParams }: PageProps<"/templates">)
     <div className="space-y-10">
       <PageHeader
         eyebrow="Templates"
-        title="How posts look"
-        description="The layouts Autopost uses to draw your posts: the ones included with Autopost and the ones you uploaded."
+        title="How your posts will look"
+        description="The layouts Autopost uses to draw your posts: for every type of post Autopost provides a basa layout you can personalize to create your own templates."
+        actions={
+          <Suspense fallback={<Loader2Icon />}>
+            <NewTemplateAction />
+          </Suspense>
+        }
       />
 
       <section className="space-y-6">
@@ -66,18 +76,23 @@ export default function TemplatesPage({ searchParams }: PageProps<"/templates">)
           ))}
         </Suspense>
       </section>
-
-      <section className="space-y-6">
-        <SectionTitle>Templates Bases</SectionTitle>
-        <p className="max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
-          Pick a base to start from: you can then change it and save it as a template of your own.
-        </p>
-        <Suspense fallback={<GridSkeleton count={4} />}>
-          <BaseTemplatesSection />
-        </Suspense>
-      </section>
     </div>
   );
+}
+
+async function NewTemplateAction () {
+
+  const { data, error } = await settle(serverApi.baseTemplates());
+
+  if (error) return <ApiNotice error={error} />;
+
+  return (
+      <NewTemplateDialog>
+      <Suspense fallback={<GridSkeleton count={data.length} />}>
+        <BasesGrid bases={data} />
+      </Suspense>
+    </NewTemplateDialog>
+  )
 }
 
 async function BaseTemplatesSection() {
@@ -99,13 +114,14 @@ async function UserTemplatesFilters() {
 async function UserTemplatesSection({ searchParams }: { searchParams: SearchParams }) {
   const bases = await settle(serverApi.baseTemplates());
   const params = parseListParams(searchParams, {
-    filters: ["q", "base"],
-    // Unknown base keys would make the backend answer 422.
-    validate: bases.data ? { base: bases.data.map((b) => b.key) } : {},
+    // Same param as the select in templateFilters.
+    filters: ["q", "post-type"],
+    // Unknown post types would make the backend answer 422.
+    validate: bases.data ? { "post-type": bases.data.map((b) => b.key) } : {},
   });
 
   const { data, error } = await settle(
-    serverApi.templates(listQuery(params, { rename: { q: "search", base: "base_template" } })),
+    serverApi.templates(listQuery(params, { rename: { q: "search", "post-type": "type" } })),
   );
   if (error) return <ApiNotice error={error} />;
 

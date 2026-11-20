@@ -2,11 +2,13 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import { applyCustomization, readTemplateVars, type CssVars } from "@/lib/template/compile";
-import type { JsonObject } from "@/lib/template/schema";
+import { applyCustomization } from "@/lib/template/compile";
+import type { JsonObject, JsonSchema } from "@/lib/template/schema";
 import { cn } from "@/lib/utils";
 
 const FALLBACK_SLIDE = { width: 1080, height: 1350 };
+/** Slides of the base: `<section class="slide" data-type="…">`. */
+const SLIDE_SELECTOR = ".slide, .t-slide, section";
 
 type Metrics = { width: number; height: number; slideHeight: number };
 
@@ -17,7 +19,7 @@ function viewportWidth(html: string) {
 }
 
 function measure(doc: Document, width: number): Metrics {
-  const slide = doc.querySelector<HTMLElement>(".t-slide, section");
+  const slide = doc.querySelector<HTMLElement>(SLIDE_SELECTOR);
   return {
     width,
     height: doc.documentElement.scrollHeight,
@@ -32,16 +34,24 @@ function measure(doc: Document, width: number): Metrics {
  */
 export function TemplatePreview({
   html,
+  schema,
   values,
+  focusSlide,
   className,
 }: {
   html: string;
+  /** Editable schema of the post type: its `x-ui.cssVar` fields drive the CSS. */
+  schema: JsonSchema;
   values: JsonObject;
+  /**
+   * Slide type to bring into view (`data-type` of its section), set while a
+   * settings block with `x-ui.previewSlide` is open. null = back to the top.
+   */
+  focusSlide?: string | null;
   className?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const baseVarsRef = useRef<CssVars | null>(null);
 
   const [frameWidth] = useState(() => viewportWidth(html));
   const [loads, setLoads] = useState(0);
@@ -64,7 +74,7 @@ export function TemplatePreview({
     return () => observer.disconnect();
   }, []);
 
-  // Iframe document ready: read the template's own variables and its size.
+  // Iframe document ready: start tracking its size.
   useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
@@ -74,7 +84,6 @@ export function TemplatePreview({
       const doc = iframe.contentDocument;
       // The first document is the empty about:blank, not the template.
       if (!doc || doc.URL !== "about:srcdoc") return;
-      baseVarsRef.current = readTemplateVars(doc);
       observer?.disconnect();
       observer = new ResizeObserver(() => setMetrics(measure(doc, frameWidth)));
       observer.observe(doc.documentElement);
@@ -93,15 +102,30 @@ export function TemplatePreview({
   // Apply the customization before paint, so the defaults never flash.
   useLayoutEffect(() => {
     const doc = iframeRef.current?.contentDocument;
-    if (loads === 0 || !doc || !baseVarsRef.current) return;
-    applyCustomization(doc, values, baseVarsRef.current);
-  }, [values, loads]);
+    if (loads === 0 || !doc) return;
+    applyCustomization(doc, schema, values);
+  }, [schema, values, loads]);
 
   const scale =
     box.width > 0
       ? Math.max(0, Math.min(1, box.width / metrics.width, box.height / metrics.slideHeight))
       : 0;
   const ready = loads > 0 && scale > 0;
+
+  // Bring the slide of the open settings block into view.
+  useEffect(() => {
+    const container = containerRef.current;
+    const doc = iframeRef.current?.contentDocument;
+    if (!ready || focusSlide === undefined || !container || !doc) return;
+    if (focusSlide === null) {
+      container.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    const slide = doc.querySelector<HTMLElement>(`[data-type="${CSS.escape(focusSlide)}"]`);
+    if (!slide) return;
+    // The frame starts after the container padding: this leaves the same gap above the slide.
+    container.scrollTo({ top: slide.offsetTop * scale, behavior: "smooth" });
+  }, [focusSlide, ready, scale]);
 
   return (
     <div ref={containerRef} className={cn("relative overflow-auto bg-muted/60 p-6 md:p-8", className)}>
