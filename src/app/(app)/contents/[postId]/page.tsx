@@ -11,6 +11,7 @@ import {serverApi, settle} from "@/lib/api/server";
 import type {ContentStatus} from "@/lib/api/types";
 import {contentStatusLabel} from "@/lib/format";
 import {LocalDateTime} from "@/components/local-date-time";
+import {Lightbox, LightboxTrigger} from "@/components/image-lightbox";
 import {PublishPostButton} from "./publish-post-button";
 
 export const metadata: Metadata = {title: "Post"};
@@ -62,6 +63,11 @@ async function PostDetails({postId}: { postId: string }) {
 
     const title = idea.title;
     const slides = post.slides;
+    // Slides still rendering have no URL: keep them out of the lightbox and
+    // remember where each viewable slide sits in it.
+    const viewable = slides.filter((s) => s.url);
+    const lightboxImages = viewable.map((s) => ({src: s.url!, alt: `Slide ${slides.indexOf(s) + 1}`}));
+    const lightboxIndex = new Map(viewable.map((s, i) => [s.id, i]));
 
     return (
         <div className="space-y-12">
@@ -97,21 +103,29 @@ async function PostDetails({postId}: { postId: string }) {
 
             <section className="space-y-6">
                 <SectionTitle>Slides</SectionTitle>
-                <ul className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
-                    {slides.map((s, i) => (
-                        <li key={s.id}>
-                            <div className="aspect-[4/5] overflow-hidden bg-muted">
-                                {s.url ? (
-                                    // eslint-disable-next-line @next/next/no-img-element -- storage URLs are external and not known in advance
-                                    <img src={s.url} alt="" className="size-full object-cover"/>
-                                ) : null}
-                            </div>
-                            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                                {i + 1} / {slides.length}
-                            </p>
-                        </li>
-                    ))}
-                </ul>
+                <Lightbox images={lightboxImages}>
+                    <ul className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+                        {slides.map((s, i) => (
+                            <li key={s.id}>
+                                <div className="aspect-4/5 overflow-hidden bg-muted">
+                                    {s.url ? (
+                                        <LightboxTrigger index={lightboxIndex.get(s.id)!} className="group">
+                                            {/* eslint-disable-next-line @next/next/no-img-element -- storage URLs are external and not known in advance */}
+                                            <img
+                                                src={s.url}
+                                                alt=""
+                                                className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                                            />
+                                        </LightboxTrigger>
+                                    ) : null}
+                                </div>
+                                <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                                    {i + 1} / {slides.length}
+                                </p>
+                            </li>
+                        ))}
+                    </ul>
+                </Lightbox>
             </section>
         </div>
     );
@@ -141,7 +155,7 @@ function PostSkeleton() {
             </div>
             <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
                 {Array.from({length: 4}).map((_, i) => (
-                    <Skeleton key={i} className="aspect-[4/5] w-full rounded-none"/>
+                    <Skeleton key={i} className="aspect-4/5 w-full rounded-none"/>
                 ))}
             </div>
         </div>
