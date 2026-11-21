@@ -113,35 +113,38 @@ export type Template = {
 };
 
 export type TemplateBase = {
-  /** Value for `definition_json.base_template`. */
+  /** Post type: value for `CreateTemplateInput.type` and `definition_json.postType`. */
   key: string;
+  label: string;
   /** Current version: templates with a lower `base_version` are outdated. */
   version: number;
 };
 
 export type TemplateBaseDetail = TemplateBase & {
-  /** Preview image in base64. */
-  preview_image: string;
-  /** JSON Schema of the definition, with defaults. */
+  /** Base rendered with its defaults, as a JPEG data URL; null if it could not be rendered. */
+  preview_image: string | null;
+  /** JSON Schema of the definition: its `x-ui` annotations describe the editor sidebar. */
   json_schema: Record<string, unknown>;
+  /** Default values of the definition (the backend's defaults.json). */
+  defaults: JsonObject;
 };
 
 /**
- * Definition of a template: the JSON validated by its base's schema.
- * Only `schema_version` and `base_template` are required: every other value
- * falls back to the defaults declared in the schema.
+ * Definition of a template: the JSON validated by the editable schema of its
+ * post type. Only `version` and `postType` are required: every other value
+ * falls back to the defaults of the post type.
  */
 export type TemplateDefinition = {
-  schema_version: number;
-  base_template: string;
+  version: number;
+  postType: string;
   [key: string]: unknown;
 };
 
 /** Detail view: includes the Jinja2 source, too heavy for the list. */
 export type TemplateDetail = Template & {
   html_content: string;
-  /** Key of the base the template was created from. */
-  base_template: string;
+  /** Post type the template was created from (key of GET /templates/types). */
+  type: string;
   base_version: number;
   definition_json: TemplateDefinition;
   jinja_content: string;
@@ -151,7 +154,8 @@ export type TemplateDetail = Template & {
 export type CreateTemplateInput = {
   name: string;
   description: string | null;
-  base_template: string;
+  /** Post type the template is created from: `definition_json.postType` must match it. */
+  type: string;
   definition_json: JsonObject;
 };
 

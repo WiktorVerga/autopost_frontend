@@ -90,9 +90,9 @@ export const serverApi = {
     serverFetch<LogEntry[]>(`${endpoints.logs}?program_id=${programId}&limit=${limit}`),
   ),
   templates: cache((query = "") => serverFetch<Template[]>(`${endpoints.templates.list}${query}`)),
-  baseTemplates: cache(() => serverFetch<TemplateBase[]>(endpoints.templates.bases)),
-  baseDetails: cache((key: string) => serverFetch<TemplateBaseDetail>(`${endpoints.templates.bases}/${key}`)),
-  baseHtml: cache((key: string) => serverFetchText(endpoints.templates.baseHtml(key))),
+  baseTemplates: cache(() => serverFetch<TemplateBase[]>(endpoints.templates.types)),
+  baseDetails: cache((key: string) => serverFetch<TemplateBaseDetail>(`${endpoints.templates.types}/${key}`)),
+  baseHtml: cache((key: string) => serverFetchText(endpoints.templates.typeHtml(key))),
   template: cache((id: number) =>
     serverFetch<TemplateDetail>(`${endpoints.templates.list}/${id}`),
   ),

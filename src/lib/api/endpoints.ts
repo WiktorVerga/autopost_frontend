@@ -22,9 +22,9 @@ export const endpoints = {
   templates: {
     list: "/templates",
     /** Templates offered by Autopost to every user. */
-    bases: "/templates/bases",
+    types: "/templates/types",
     /** Raw HTML of a base template (served as text/html). */
-    baseHtml: (key: string) => `/templates/bases/${encodeURIComponent(key)}/html`,
+    typeHtml: (key: string) => `/templates/types/${encodeURIComponent(key)}/html`,
   },
 } as const;
 

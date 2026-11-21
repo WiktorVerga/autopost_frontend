@@ -13,7 +13,8 @@ import {
   pruneExpiredTemplateDrafts,
   saveTemplateDraft,
 } from "@/lib/template/draft-cache";
-import { setIn, type JsonObject, type JsonSchema, type Path } from "@/lib/template/schema";
+import { conformToSchema, setIn, type JsonObject, type JsonSchema, type Path } from "@/lib/template/schema";
+import { applyDerivedValues } from "@/lib/template/x-ui";
 import { SettingsPanel } from "./settings-panel";
 import { TemplatePreview } from "./template-preview";
 import SaveTemplateDialog from "@/app/(template_editor)/editor/save-template-dialog";
@@ -67,6 +68,8 @@ function EditorWorkspace({
 }: TemplateEditorProps) {
   const router = useRouter();
   const [values, setValues] = useState(initialValues);
+  // Slide shown by the preview while a settings block with `x-ui.previewSlide` is open.
+  const [focusSlide, setFocusSlide] = useState<string | null | undefined>(undefined);
 
   // Drafts are kept only for the user's own templates, never for the bases.
   const draftUpdatedAt = mode === "template" && templateid > 0 ? updatedAt : null;
@@ -90,9 +93,13 @@ function EditorWorkspace({
   if (hydrated && draftUpdatedAt !== null && draftCheckedFor !== draftUpdatedAt) {
     setDraftCheckedFor(draftUpdatedAt);
     const draft = loadTemplateDraft(templateid, draftUpdatedAt);
-    const draftJson = draft ? JSON.stringify(draft.values) : null;
-    if (draft && draftJson && draftJson !== initialJson) {
-      setValues(draft.values);
+    // The base may have changed since the draft was written.
+    const draftValues = draft
+      ? applyDerivedValues(schema, conformToSchema(schema, schema, draft.values) as JsonObject)
+      : null;
+    const draftJson = draftValues ? JSON.stringify(draftValues) : null;
+    if (draft && draftValues && draftJson && draftJson !== initialJson) {
+      setValues(draftValues);
       setRestoredDraft({ json: draftJson, savedAt: draft.savedAt });
     }
   }
@@ -185,14 +192,17 @@ function EditorWorkspace({
     });
   }
 
-  const handleChange = useCallback((path: Path, value: unknown) => {
-    setValues((current) => setIn(current, path, value));
-  }, []);
+  // Values derived from others (font fallback, weights offered by the family) follow every edit.
+  const handleChange = useCallback(
+    (path: Path, value: unknown) => {
+      setValues((current) => applyDerivedValues(schema, setIn(current, path, value)));
+    },
+    [schema],
+  );
 
   function handleExit() {
     // Opened from a direct link there is no page to go back to.
-    if (window.history.length > 1) router.back();
-    else router.push("/templates");
+    router.push("/templates");
   }
 
   return (
@@ -225,11 +235,18 @@ function EditorWorkspace({
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <TemplatePreview html={html} values={values} className="min-h-0 flex-1" />
+        <TemplatePreview
+          html={html}
+          schema={schema}
+          values={values}
+          focusSlide={focusSlide}
+          className="min-h-0 flex-1"
+        />
         <SettingsPanel
           schema={schema}
           values={values}
           onChange={handleChange}
+          onFocusSlide={setFocusSlide}
           className="h-[45dvh] shrink-0 border-t lg:h-auto lg:w-96 lg:border-t-0 lg:border-l"
         />
       </div>

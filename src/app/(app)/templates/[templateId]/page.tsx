@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { serverApi, settle } from "@/lib/api/server";
 import type { TemplateFormat } from "@/lib/api/types";
 import { LocalDateTime } from "@/components/local-date-time";
+import { Lightbox, LightboxTrigger } from "@/components/image-lightbox";
 import { isRunning } from "@/lib/program";
 import { DeleteTemplateButton } from "./delete-template-button";
 
@@ -81,7 +82,7 @@ async function TemplateDetails({ templateId }: { templateId: string }) {
         </Fact>
         <Fact label="Base">
           <span className="font-mono text-xs">
-            {template.base_template} · v{template.base_version}
+            {template.type} · v{template.base_version}
           </span>
         </Fact>
         <Fact label="Updated">
@@ -97,8 +98,16 @@ async function TemplateDetails({ templateId }: { templateId: string }) {
             style={{ aspectRatio: `${template.width} / ${template.height}` }}
           >
             {template.preview_image ? (
-              // eslint-disable-next-line @next/next/no-img-element -- storage URLs are external and not known in advance
-              <img src={template.preview_image} alt="" className="size-full object-cover" />
+              <Lightbox images={[{ src: template.preview_image, alt: `${template.name} preview` }]}>
+                <LightboxTrigger index={0} className="group">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- storage URLs are external and not known in advance */}
+                  <img
+                    src={template.preview_image}
+                    alt=""
+                    className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                  />
+                </LightboxTrigger>
+              </Lightbox>
             ) : (
               <div className="flex size-full flex-col items-center justify-center gap-3 text-muted-foreground">
                 <LayoutTemplateIcon className="size-8" strokeWidth={1.25} />
