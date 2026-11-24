@@ -228,3 +228,12 @@ export type CreateProgramInput = {
 export type UpdateProgramInput = Partial<Omit<CreateProgramInput, "instagram_account_id">> & {
   instagram_account_id?: Id;
 };
+
+/** Request to be added to the invite-only beta, sent from the landing page. */
+export type BetaRequestInput = {
+  email: string;
+  /** Instagram username, without the leading "@". */
+  instagram_handle: string;
+  /** Company or field the person works in. */
+  company: string | null;
+};

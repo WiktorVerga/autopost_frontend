@@ -167,7 +167,7 @@
  * border-foreground and friends keep working inside it in dark mode.
  */
 .landing-paper {
-  --background: oklch(0.984 0.006 85);
+  --background: oklch(0.904 0 0);
   --foreground: oklch(0.21 0.012 60);
   --border: oklch(0.888 0.012 80);
   --signal: oklch(0.63 0.19 35);

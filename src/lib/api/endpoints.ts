@@ -19,6 +19,8 @@ export const endpoints = {
     disconnect: "/instagram-accounts",
   },
   posts: "/posts",
+  /** Invite requests for the beta, sent from the landing page (no session needed). */
+  betaRequests: "/beta-requests",
   templates: {
     list: "/templates",
     /** Templates offered by Autopost to every user. */

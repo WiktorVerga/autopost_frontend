@@ -6,6 +6,7 @@
 import { BROWSER_API_PREFIX, endpoints } from "./endpoints";
 import { toApiError } from "./errors";
 import {
+  BetaRequestInput,
   CreateCollectionInput,
   CreateIdeaInput,
   CreateProgramInput, CreateTemplateInput,
@@ -41,6 +42,9 @@ export async function apiFetch<T>(path: string, options: Options = {}): Promise<
 }
 
 export const api = {
+  /** Public: no session needed. 409 means the request was already sent. */
+  requestInvite: (input: BetaRequestInput) =>
+      apiFetch<void>(endpoints.betaRequests, {method: "POST", body: input}),
   logout: () => apiFetch<void>(endpoints.auth.logout, {method: "POST"}),
   createCollection: (input: CreateCollectionInput) =>
       apiFetch<IdeaCollection>(endpoints.collections, {method: "POST", body: input}),
