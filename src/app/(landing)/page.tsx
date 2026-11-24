@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowDownIcon, ArrowRightIcon, CheckIcon, TriangleAlertIcon, XIcon } from "lucide-react";
 
 import { AuthCta } from "./auth-cta";
+import { InviteRequestForm } from "./invite-request-form";
 import { LandingMotion } from "./landing-motion";
 
 export const metadata: Metadata = {
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
 
 const SECTIONS = [
   { href: "#beta", label: "Invite only" },
+  { href: "#request", label: "Request invite" },
   { href: "#what", label: "What it is" },
   { href: "#guide", label: "First carousel" },
   { href: "#why", label: "Why" },
@@ -124,17 +126,8 @@ export default function LandingPage() {
 
       <main>
         {/* Hero */}
-        <section className="mx-auto grid w-full max-w-6xl gap-14 px-5 pt-16 pb-20 md:px-10 md:pt-24 md:pb-28 lg:grid-cols-[1.1fr_1fr] lg:items-center">
+        <section className="mx-auto h-screen grid w-full max-w-6xl gap-14 px-5 pt-16 pb-20 md:px-10 md:pt-24 md:pb-28 lg:grid-cols-[1.1fr_1fr] lg:items-center">
           <div>
-            <a
-              data-hero-fade
-              href="#beta"
-              className="landing-paper invisible inline-flex items-center gap-2 rounded-sm border px-2.5 py-1 text-sm font-medium underline-offset-4 hover:underline"
-            >
-              <TriangleAlertIcon className="size-4 text-signal" aria-hidden />
-              Invite-only beta: read this before you start
-            </a>
-
             <h1 className="mt-6 font-serif text-7xl leading-[0.9] tracking-tight sm:text-8xl lg:text-9xl">
               {/* The padding keeps descenders inside the mask the lines rise out of. */}
               <span className="block overflow-hidden pb-[0.14em]">
@@ -143,14 +136,14 @@ export default function LandingPage() {
                 </span>
               </span>
               <span className="-mt-[0.14em] block overflow-hidden pb-[0.14em]">
-                <em data-hero-line className="invisible block text-signal">
+                <strong data-hero-line className="invisible block text-signal tracking-wide">
                   Posts out.
-                </em>
+                </strong>
               </span>
             </h1>
 
             <p data-hero-fade className="invisible mt-6 max-w-xl text-lg text-muted-foreground">
-              Autopost turns a list of ideas into Instagram carousels and publishes them on a
+              Autopost turns a list of ideas into Instagram posts and publishes them on a
               schedule, so your page keeps posting while you get on with the rest of your work.
             </p>
 
@@ -160,7 +153,7 @@ export default function LandingPage() {
                 href="#guide"
                 className="inline-flex items-center gap-1.5 text-sm underline-offset-4 hover:underline"
               >
-                Make your first carousel <ArrowDownIcon className="size-3.5" />
+                See how it works <ArrowDownIcon className="size-3.5" />
               </a>
             </div>
           </div>
@@ -194,8 +187,12 @@ export default function LandingPage() {
                   <strong className="font-bold">If connecting your account fails, this is why.</strong>
                 </p>
                 <p>
-                  To get in, reply to whoever sent you this page with the Instagram username you
-                  want to post to. Once it has been added, connect it and everything works.
+                  To get in,{" "}
+                  <a href="#request" className="font-bold underline underline-offset-4">
+                    request an invite
+                  </a>{" "}
+                  with the Instagram username you want to post to. Once it has been added, connect
+                  it and everything works.
                 </p>
               </div>
             </div>
@@ -219,9 +216,19 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-6 border-t-2 border-foreground pt-5 font-bold">
-                With an invite: all of it.
-              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Invite request */}
+        <section id="request" className="scroll-mt-14 border-b">
+          <div className="mx-auto grid w-full max-w-6xl gap-12 px-5 py-24 md:px-10 md:py-32 lg:grid-cols-[1fr_1fr] lg:items-start">
+            <SectionHeading eyebrow="Request an invite" title="Ask for your place in the beta.">
+              Tell us where to reach you and which Instagram account you want to publish to. We add
+              accounts to the invite list by hand and write to you as soon as yours is in.
+            </SectionHeading>
+            <div data-reveal>
+              <InviteRequestForm />
             </div>
           </div>
         </section>
@@ -231,7 +238,6 @@ export default function LandingPage() {
           <SectionHeading eyebrow="What it is" title="From a note to a published post.">
             You keep a list of things worth saying. Autopost does the repetitive part: it writes the
             slides and the caption, draws them with your template and posts them when you said it
-            should. Today it makes carousels; reels and stories come next.
           </SectionHeading>
 
           {/* gap-px over a border-coloured background draws the hairline grid */}
@@ -296,8 +302,9 @@ export default function LandingPage() {
               data-reveal
               className="mt-6 max-w-5xl font-serif text-4xl leading-[1.05] tracking-tight md:text-6xl"
             >
-              Having ideas was never the hard part of running a page. The hard part is the hour that
-              comes after each one.
+              Having ideas is already hard.
+              <br />
+              The worst is the hour of work that comes after.
             </p>
             <div data-reveal-group className="mt-12 grid max-w-5xl gap-8 text-muted-foreground md:grid-cols-2">
               <p data-reveal-item className="leading-relaxed">
