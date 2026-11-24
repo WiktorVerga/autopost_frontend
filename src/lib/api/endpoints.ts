@@ -21,6 +21,8 @@ export const endpoints = {
   posts: "/posts",
   /** Invite requests for the beta, sent from the landing page (no session needed). */
   betaRequests: "/beta-requests",
+  /** Problem reports and suggestions sent from the beta report button. */
+  reports: "/reports",
   templates: {
     list: "/templates",
     /** Templates offered by Autopost to every user. */

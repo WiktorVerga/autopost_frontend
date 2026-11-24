@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { BetaBanner } from "@/components/beta-banner";
+import { ReportButton } from "@/components/report-button";
 import { UserMenu } from "@/components/user-menu";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -37,6 +38,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
       </SidebarInset>
+      <ReportButton />
     </SidebarProvider>
   );
 }

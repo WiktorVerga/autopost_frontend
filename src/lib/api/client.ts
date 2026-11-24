@@ -15,7 +15,7 @@ import {
   IdeaCollection,
   InstagramOAuthLogin,
   Post,
-  Program, Template,
+  Program, ReportInput, Template,
   UpdateCollectionInput,
   UpdateIdeaInput,
   UpdateProgramInput, UpdateTemplateInput,
@@ -45,6 +45,8 @@ export const api = {
   /** Public: no session needed. 409 means the request was already sent. */
   requestInvite: (input: BetaRequestInput) =>
       apiFetch<void>(endpoints.betaRequests, {method: "POST", body: input}),
+  createReport: (input: ReportInput) =>
+      apiFetch<void>(endpoints.reports, {method: "POST", body: input}),
   logout: () => apiFetch<void>(endpoints.auth.logout, {method: "POST"}),
   createCollection: (input: CreateCollectionInput) =>
       apiFetch<IdeaCollection>(endpoints.collections, {method: "POST", body: input}),
