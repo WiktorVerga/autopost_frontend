@@ -237,3 +237,19 @@ export type BetaRequestInput = {
   /** Company or field the person works in. */
   company: string | null;
 };
+
+/** Kind of problem picked in the beta report form (one per report). */
+export type ReportCategory =
+  | "missing_feature"
+  | "feature_error"
+  | "unclear_feature"
+  | "broken_feature"
+  | "improvement_suggestion";
+
+/** Report sent from the floating button. The backend adds the user and the user agent. */
+export type ReportInput = {
+  category: ReportCategory;
+  description: string;
+  /** Frontend page the report was sent from. */
+  page_url: string | null;
+};
