@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { GoogleTagManager } from "@next/third-parties/google";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 
+import { CookieConsent } from "@/components/cookie-consent";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
@@ -26,9 +26,6 @@ export const metadata: Metadata = {
   description: "Turn ideas into scheduled Instagram posts, reels and stories.",
 };
 
-/** Google Tag Manager container; GA4 is configured inside it. */
-const GTM_ID = "GTM-NZVWL8GG";
-
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
@@ -37,8 +34,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${GeistSans.variable} ${GeistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
     >
-      {/* Loads after hydration and sets up window.dataLayer for every route. */}
-      <GoogleTagManager gtmId={GTM_ID} />
       <body className="min-h-full font-sans">
         {/* Gitignored file, so it is linked rather than imported: an import would break the build on the server. */}
         {process.env.NODE_ENV === "development" && (
@@ -47,6 +42,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
           <Toaster position="bottom-right" />
+          {/* Cookie banner; Google Tag Manager (GA4) loads only after the visitor accepts analytics. */}
+          <CookieConsent />
         </ThemeProvider>
       </body>
     </html>

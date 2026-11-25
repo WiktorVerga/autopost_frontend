@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowDownIcon, ArrowRightIcon, CheckIcon, TriangleAlertIcon, XIcon } from "lucide-react";
 
+import { CookieSettingsButton } from "@/components/cookie-settings-button";
+import { LEGAL_PATHS } from "@/lib/legal";
+
 import { AuthCta } from "./auth-cta";
 import { InviteRequestForm } from "./invite-request-form";
 import { LandingMotion } from "./landing-motion";
@@ -342,6 +345,15 @@ export default function LandingPage() {
           <span className="flex items-baseline gap-1.5">
             Autopost <span className="size-1.5 rounded-full bg-signal" aria-hidden />
           </span>
+          <nav aria-label="Legal" className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <Link href={LEGAL_PATHS.privacy} className="hover:text-foreground">
+              Privacy Policy
+            </Link>
+            <Link href={LEGAL_PATHS.cookies} className="hover:text-foreground">
+              Cookie Policy
+            </Link>
+            <CookieSettingsButton className="uppercase tracking-[0.14em] hover:text-foreground" />
+          </nav>
           <span>Invite-only beta</span>
         </div>
       </footer>

@@ -5,6 +5,7 @@ import { ArrowRightIcon, TriangleAlertIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { browserUrl, endpoints } from "@/lib/api/endpoints";
 import { BETA_NOTICE } from "@/lib/beta";
+import { LEGAL_PATHS } from "@/lib/legal";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -59,6 +60,19 @@ export default function LoginPage() {
               <ArrowRightIcon />
             </a>
           </Button>
+
+          <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+            Signing in shares your name and email from Google with Autopost. See how we use them in
+            the{" "}
+            <Link href={LEGAL_PATHS.privacy} className="underline underline-offset-4 hover:text-foreground">
+              Privacy Policy
+            </Link>{" "}
+            and{" "}
+            <Link href={LEGAL_PATHS.cookies} className="underline underline-offset-4 hover:text-foreground">
+              Cookie Policy
+            </Link>
+            .
+          </p>
         </div>
       </section>
     </div>
