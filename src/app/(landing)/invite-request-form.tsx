@@ -1,11 +1,13 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { ArrowRightIcon, CheckIcon, LoaderCircleIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LEGAL_PATHS } from "@/lib/legal";
 
 import { COMPANY_MAX, requestInvite, type InviteRequestState } from "./invite-request";
 
@@ -104,6 +106,38 @@ export function InviteRequestForm() {
             className="h-11"
           />
         </Field>
+
+        <div>
+          <div className="flex items-start gap-3">
+            <input
+              id="invite-privacy"
+              name="privacy"
+              type="checkbox"
+              required
+              defaultChecked={values?.privacy === "on"}
+              aria-invalid={errors.privacy ? true : undefined}
+              aria-describedby={errors.privacy ? "invite-privacy-error" : undefined}
+              className="mt-0.5 size-4 shrink-0 accent-primary"
+            />
+            <label htmlFor="invite-privacy" className="text-sm leading-relaxed text-muted-foreground">
+              I have read the{" "}
+              <Link
+                href={LEGAL_PATHS.privacy}
+                target="_blank"
+                className="font-medium text-foreground underline underline-offset-4"
+              >
+                Privacy Policy
+              </Link>{" "}
+              and understand that my email and Instagram account are used to handle my invite
+              request.
+            </label>
+          </div>
+          {errors.privacy && (
+            <p id="invite-privacy-error" className="mt-2 text-sm text-destructive">
+              {errors.privacy}
+            </p>
+          )}
+        </div>
       </div>
 
       {formError && (

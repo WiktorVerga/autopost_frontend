@@ -10,7 +10,7 @@ const AUTH_BYPASS = process.env.AUTH_BYPASS === "true";
 
 /** Where the app starts for a signed-in user. "/" is the public landing page. */
 const APP_HOME = "/dashboard";
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/privacy", "/cookies"];
 
 export function proxy(request: NextRequest) {
   if (AUTH_BYPASS) return NextResponse.next();
@@ -29,6 +29,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Signed-in users are only bounced away from the login page: the policies stay readable.
   if (hasSession && pathname === "/login") {
     return NextResponse.redirect(new URL(APP_HOME, request.url));
   }

@@ -2,9 +2,10 @@ import { sendGTMEvent } from "@next/third-parties/google";
 
 import { api } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
+import { analyticsAllowed } from "@/lib/consent";
 import type { BetaRequestInput } from "@/lib/api/types";
 
-type Field = "email" | "instagram" | "company";
+type Field = "email" | "instagram" | "company" | "privacy";
 
 export type InviteRequestState =
   | { status: "idle" }
@@ -56,6 +57,8 @@ export async function requestInvite(
     email: text(formData, "email"),
     instagram: text(formData, "instagram"),
     company: text(formData, "company"),
+    // checkbox: "on" when ticked, missing otherwise
+    privacy: text(formData, "privacy"),
   };
   const handle = normaliseHandle(values.instagram);
 
@@ -69,6 +72,8 @@ export async function requestInvite(
 
   if (values.company.length > COMPANY_MAX)
     fieldErrors.company = `Keep it under ${COMPANY_MAX} characters.`;
+
+  if (values.privacy !== "on") fieldErrors.privacy = "Please confirm you have read the Privacy Policy.";
 
   if (Object.keys(fieldErrors).length > 0) return { status: "error", fieldErrors, values };
 
@@ -93,12 +98,14 @@ export async function requestInvite(
       };
   }
 
-  // No email or handle: Google Analytics must not receive personal data.
-  sendGTMEvent({
-    event: "invite_request",
-    already_requested: alreadyRequested,
-    has_company: input.company !== null,
-  });
+  // Only with analytics consent: otherwise the event would wait in the dataLayer and reach GA4
+  // if the visitor accepted later on the same page. No email or handle: GA must not get personal data.
+  if (analyticsAllowed())
+    sendGTMEvent({
+      event: "invite_request",
+      already_requested: alreadyRequested,
+      has_company: input.company !== null,
+    });
 
   return { status: "success", handle };
 }
